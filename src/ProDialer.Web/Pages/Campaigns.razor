@@ -1,0 +1,150 @@
+@page "/campaigns"
+@using ProDialer.Shared.DTOs
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Campaigns</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Campaigns</h1>
+    <button class="btn btn-primary" @onclick="NavigateToCreate">
+        <i class="fas fa-plus"></i> Create Campaign
+    </button>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (campaigns != null)
+{
+    <div class="row">
+        @foreach (var campaign in campaigns)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title">@campaign.Name</h5>
+                            <span class="badge @(campaign.IsActive ? "bg-success" : "bg-secondary")">
+                                @(campaign.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(campaign.Description))
+                        {
+                            <p class="card-text text-muted">@campaign.Description</p>
+                        }
+                        <div class="row text-center mb-3">
+                            <div class="col">
+                                <small class="text-muted">Dialing Ratio</small>
+                                <div class="fw-bold">@campaign.DialingRatio:1</div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted">Total Leads</small>
+                                <div class="fw-bold">@campaign.TotalLeads.ToString("N0")</div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted">Called</small>
+                                <div class="fw-bold">@campaign.CalledLeads.ToString("N0")</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary flex-fill"
+                                    @onclick="() => NavigateToEdit(campaign.Id)">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-info flex-fill"
+                                    @onclick="() => NavigateToLists(campaign.Id)">
+                                <i class="fas fa-list"></i> Lists
+                            </button>
+                            <button class="btn btn-sm @(campaign.IsActive ? "btn-outline-warning" : "btn-outline-success") flex-fill"
+                                    @onclick="() => ToggleActive(campaign.Id, campaign.IsActive)">
+                                <i class="fas @(campaign.IsActive ? "fa-pause" : "fa-play")"></i>
+                                @(campaign.IsActive ? "Pause" : "Start")
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>Created: @campaign.CreatedAt.ToString("MMM dd, yyyy")</small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!campaigns.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+            <h3 class="text-muted">No Campaigns Yet</h3>
+            <p class="text-muted">Create your first campaign to start making calls.</p>
+            <button class="btn btn-primary" @onclick="NavigateToCreate">
+                <i class="fas fa-plus"></i> Create Your First Campaign
+            </button>
+        </div>
+    }
+}
+
+@code {
+    private List<CampaignSummaryDto>? campaigns;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCampaigns();
+    }
+
+    private async Task LoadCampaigns()
+    {
+        try
+        {
+            isLoading = true;
+            campaigns = await Http.GetFromJsonAsync<List<CampaignSummaryDto>>("api/campaigns");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            campaigns = new List<CampaignSummaryDto>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/campaigns/create");
+    }
+
+    private void NavigateToEdit(int campaignId)
+    {
+        Navigation.NavigateTo($"/campaigns/edit/{campaignId}");
+    }
+
+    private void NavigateToLists(int campaignId)
+    {
+        Navigation.NavigateTo($"/campaigns/{campaignId}/lists");
+    }
+
+    private async Task ToggleActive(int campaignId, bool currentlyActive)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/campaigns/{campaignId}/toggle", new { });
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadCampaigns();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}

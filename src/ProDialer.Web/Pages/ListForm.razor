@@ -1,0 +1,214 @@
+@page "/lists/create"
+@page "/lists/{ListId:int}/edit"
+@using ProDialer.Shared.DTOs
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsEditMode ? "Edit List" : "Create List") - ProDialer</PageTitle>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">@(IsEditMode ? "Edit List" : "Create New List")</h3>
+                </div>
+                <div class="card-body">
+                    @if (errorMessage != null)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    <EditForm Model="listDto" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name *</label>
+                            <InputText id="name" class="form-control" @bind-Value="listDto.Name" />
+                            <ValidationMessage For="@(() => listDto.Name)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <InputTextArea id="description" class="form-control" rows="3" @bind-Value="listDto.Description" />
+                            <ValidationMessage For="@(() => listDto.Description)" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <InputNumber id="priority" class="form-control" @bind-Value="listDto.Priority" min="1" max="10" />
+                                    <ValidationMessage For="@(() => listDto.Priority)" />
+                                    <div class="form-text">1 = Highest, 10 = Lowest</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <InputCheckbox id="callInOrder" class="form-check-input" @bind-Value="listDto.CallInOrder" />
+                                        <label class="form-check-label" for="callInOrder">
+                                            Call Leads in Order
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
+                                    <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="listDto.MaxCallAttempts" min="1" max="10" />
+                                    <ValidationMessage For="@(() => listDto.MaxCallAttempts)" />
+                                    <div class="form-text">Leave empty to use campaign setting</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="minCallInterval" class="form-label">Min Call Interval (minutes)</label>
+                                    <InputNumber id="minCallInterval" class="form-control" @bind-Value="listDto.MinCallInterval" min="1" max="1440" />
+                                    <ValidationMessage For="@(() => listDto.MinCallInterval)" />
+                                    <div class="form-text">Leave empty to use campaign setting</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <InputCheckbox id="isActive" class="form-check-input" @bind-Value="listDto.IsActive" />
+                                <label class="form-check-label" for="isActive">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="customFieldsSchema" class="form-label">Custom Fields Schema (JSON)</label>
+                            <InputTextArea id="customFieldsSchema" class="form-control" rows="4" @bind-Value="listDto.CustomFieldsSchema" />
+                            <ValidationMessage For="@(() => listDto.CustomFieldsSchema)" />
+                            <div class="form-text">JSON configuration for custom fields schema</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                @(IsEditMode ? "Update List" : "Create List")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? ListId { get; set; }
+
+    private CreateListDto listDto = new CreateListDto();
+    private string? errorMessage;
+    private bool isSubmitting = false;
+
+    private bool IsEditMode => ListId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEditMode)
+        {
+            await LoadList();
+        }
+        else
+        {
+            // Set defaults for new list
+            listDto = new CreateListDto
+            {
+                Priority = 5,
+                MaxCallAttempts = 3,
+                CallInOrder = true,
+                IsActive = true
+            };
+        }
+    }
+
+    private async Task LoadList()
+    {
+        try
+        {
+            var list = await Http.GetFromJsonAsync<ListDto>($"api/lists/{ListId}");
+            if (list != null)
+            {
+                // Map to create/update DTO
+                listDto = new CreateListDto
+                {
+                    Name = list.Name,
+                    Description = list.Description,
+                    Priority = list.Priority,
+                    CallInOrder = list.CallInOrder,
+                    MaxCallAttempts = list.MaxCallAttempts,
+                    MinCallInterval = list.MinCallInterval,
+                    IsActive = list.IsActive,
+                    CustomFieldsSchema = list.CustomFieldsSchema
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load list: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            if (IsEditMode)
+            {
+                var updateDto = new UpdateListDto
+                {
+                    Id = ListId!.Value,
+                    Name = listDto.Name,
+                    Description = listDto.Description,
+                    Priority = listDto.Priority,
+                    CallInOrder = listDto.CallInOrder,
+                    MaxCallAttempts = listDto.MaxCallAttempts,
+                    MinCallInterval = listDto.MinCallInterval,
+                    IsActive = listDto.IsActive,
+                    CustomFieldsSchema = listDto.CustomFieldsSchema
+                };
+
+                var response = await Http.PutAsJsonAsync($"api/lists/{ListId}", updateDto);
+                response.EnsureSuccessStatusCode();
+            }
+            else
+            {
+                var response = await Http.PostAsJsonAsync("api/lists", listDto);
+                response.EnsureSuccessStatusCode();
+            }
+
+            Navigation.NavigateTo("/lists");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to save list: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/lists");
+    }
+}

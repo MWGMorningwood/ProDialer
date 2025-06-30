@@ -1,0 +1,223 @@
+@page "/campaigns/create"
+@page "/campaigns/edit/{CampaignId:int}"
+@using ProDialer.Shared.DTOs
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsEditMode ? "Edit Campaign" : "Create Campaign")</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">@(IsEditMode ? "Edit Campaign" : "Create New Campaign")</h4>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                <EditForm Model="campaignDto" OnValidSubmit="HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" />
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Campaign Name <span class="text-danger">*</span></label>
+                        <InputText id="name" class="form-control" @bind-Value="campaignDto.Name" />
+                        <ValidationMessage For="@(() => campaignDto.Name)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="form-control" rows="3" @bind-Value="campaignDto.Description" />
+                        <ValidationMessage For="@(() => campaignDto.Description)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dialingRatio" class="form-label">Dialing Ratio <span class="text-danger">*</span></label>
+                        <InputNumber id="dialingRatio" class="form-control" @bind-Value="campaignDto.DialingRatio" min="1" max="10" />
+                        <div class="form-text">Number of calls to make per available agent (1-10)</div>
+                        <ValidationMessage For="@(() => campaignDto.DialingRatio)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
+                        <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="campaignDto.MaxCallAttempts" min="1" max="20" />
+                        <div class="form-text">Maximum number of times to attempt calling a lead</div>
+                        <ValidationMessage For="@(() => campaignDto.MaxCallAttempts)" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="callAttemptDelay" class="form-label">Call Attempt Delay (minutes)</label>
+                                <InputNumber id="callAttemptDelay" class="form-control" @bind-Value="campaignDto.CallAttemptDelay" min="1" max="300" />
+                                <ValidationMessage For="@(() => campaignDto.CallAttemptDelay)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="minCallInterval" class="form-label">Min Call Interval (minutes)</label>
+                                <InputNumber id="minCallInterval" class="form-control" @bind-Value="campaignDto.MinCallInterval" min="1" max="1440" />
+                                <ValidationMessage For="@(() => campaignDto.MinCallInterval)" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <InputCheckbox id="enableAnsweringMachineDetection" class="form-check-input" @bind-Value="campaignDto.EnableAnsweringMachineDetection" />
+                            <label for="enableAnsweringMachineDetection" class="form-check-label">
+                                Enable Answering Machine Detection
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <InputCheckbox id="enableCallRecording" class="form-check-input" @bind-Value="campaignDto.EnableCallRecording" />
+                            <label for="enableCallRecording" class="form-check-label">
+                                Enable Call Recording
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <InputCheckbox id="isActive" class="form-check-input" @bind-Value="campaignDto.IsActive" />
+                            <label for="isActive" class="form-check-label">
+                                Campaign is Active
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            @(IsEditMode ? "Update Campaign" : "Create Campaign")
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
+                            Cancel
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? CampaignId { get; set; }
+
+    private bool IsEditMode => CampaignId.HasValue;
+    private CreateCampaignDto campaignDto = new();
+    private bool isSubmitting = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEditMode)
+        {
+            await LoadCampaign();
+        }
+        else
+        {
+            // Set defaults for new campaign
+            campaignDto = new CreateCampaignDto
+            {
+                DialingRatio = 2,
+                MaxCallAttempts = 3,
+                CallAttemptDelay = 30,
+                MinCallInterval = 60,
+                EnableAnsweringMachineDetection = true,
+                EnableCallRecording = false,
+                IsActive = true
+            };
+        }
+    }
+
+    private async Task LoadCampaign()
+    {
+        try
+        {
+            var campaign = await Http.GetFromJsonAsync<CampaignDto>($"api/campaigns/{CampaignId}");
+            if (campaign != null)
+            {
+                // Map to create/update DTO
+                campaignDto = new CreateCampaignDto
+                {
+                    Name = campaign.Name,
+                    Description = campaign.Description,
+                    DialingRatio = campaign.DialingRatio,
+                    MaxCallAttempts = campaign.MaxCallAttempts,
+                    CallAttemptDelay = campaign.CallAttemptDelay,
+                    MinCallInterval = campaign.MinCallInterval,
+                    EnableAnsweringMachineDetection = campaign.EnableAnsweringMachineDetection,
+                    EnableCallRecording = campaign.EnableCallRecording,
+                    IsActive = campaign.IsActive
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load campaign: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            if (IsEditMode)
+            {
+                var updateDto = new UpdateCampaignDto
+                {
+                    Id = CampaignId!.Value,
+                    Name = campaignDto.Name,
+                    Description = campaignDto.Description,
+                    DialingRatio = campaignDto.DialingRatio,
+                    MaxCallAttempts = campaignDto.MaxCallAttempts,
+                    CallAttemptDelay = campaignDto.CallAttemptDelay,
+                    MinCallInterval = campaignDto.MinCallInterval,
+                    EnableAnsweringMachineDetection = campaignDto.EnableAnsweringMachineDetection,
+                    EnableCallRecording = campaignDto.EnableCallRecording,
+                    IsActive = campaignDto.IsActive
+                };
+
+                var response = await Http.PutAsJsonAsync($"api/campaigns/{CampaignId}", updateDto);
+                response.EnsureSuccessStatusCode();
+            }
+            else
+            {
+                var response = await Http.PostAsJsonAsync("api/campaigns", campaignDto);
+                response.EnsureSuccessStatusCode();
+            }
+
+            NavigateBack();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to save campaign: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/campaigns");
+    }
+}

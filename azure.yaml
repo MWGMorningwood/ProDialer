@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: prodialer
+metadata:
+  template: prodialer@0.0.1-beta
+services:
+  api:
+    project: ./src/ProDialer.Functions
+    language: dotnet
+    host: function
+  web:
+    project: ./src/ProDialer.Web
+    language: dotnet
+    host: staticwebapp
+    
+hooks:
+  postprovision:
+    - shell: pwsh
+      run: |
+        Write-Host "Setting up database schema..."
+        # Database setup scripts will be added here

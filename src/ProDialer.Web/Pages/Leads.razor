@@ -1,0 +1,365 @@
+@page "/leads"
+@page "/lists/{ListId:int}/leads"
+@using ProDialer.Shared.DTOs
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    @if (ListId.HasValue)
+                    {
+                        <span>Leads - List @ListId</span>
+                    }
+                    else
+                    {
+                        <span>All Leads</span>
+                    }
+                </h1>
+                <div>
+                    @if (ListId.HasValue)
+                    {
+                        <a href="/lists/@ListId/leads/create" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Lead
+                        </a>
+                        <button class="btn btn-secondary ms-2" @onclick="ShowImportModal">
+                            <i class="fas fa-upload me-2"></i>Import Leads
+                        </button>
+                    }
+                    else
+                    {
+                        <a href="/leads/create" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create New Lead
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success" role="alert">
+                    @successMessage
+                </div>
+            }
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" placeholder="Search leads..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" @bind="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="New">New</option>
+                                <option value="Called">Called</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="NotInterested">Not Interested</option>
+                                <option value="Callback">Callback</option>
+                                <option value="DoNotCall">Do Not Call</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary" @onclick="ApplyFilters">Apply Filters</button>
+                        </div>
+                        <div class="col-md-5 text-end">
+                            <span class="text-muted">@totalLeads leads total</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (leads == null)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (!leads.Any())
+            {
+                <div class="text-center">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">No Leads Found</h5>
+                            <p class="card-text">
+                                @if (ListId.HasValue)
+                                {
+                                    <span>This list doesn't have any leads yet.</span>
+                                }
+                                else
+                                {
+                                    <span>You haven't created any leads yet.</span>
+                                }
+                            </p>
+                            @if (ListId.HasValue)
+                            {
+                                <a href="/lists/@ListId/leads/create" class="btn btn-primary">Add Your First Lead</a>
+                            }
+                            else
+                            {
+                                <a href="/leads/create" class="btn btn-primary">Create Your First Lead</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Call Attempts</th>
+                                        <th>Last Called</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lead in leads)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@lead.FirstName @lead.LastName</strong>
+                                                @if (!string.IsNullOrEmpty(lead.Company))
+                                                {
+                                                    <br /><small class="text-muted">@lead.Company</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(lead.PrimaryPhone))
+                                                {
+                                                    <a href="tel:@lead.PrimaryPhone">@lead.PrimaryPhone</a>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(lead.PrimaryEmail))
+                                                {
+                                                    <a href="mailto:@lead.PrimaryEmail">@lead.PrimaryEmail</a>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(lead.Status)">@lead.Status</span>
+                                            </td>
+                                            <td>@lead.CallCount</td>
+                                            <td>
+                                                @if (lead.LastCallAttempt.HasValue)
+                                                {
+                                                    @lead.LastCallAttempt.Value.ToString("MM/dd/yyyy HH:mm")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Never</span>
+                                                }
+                                            </td>
+                                            <td>@lead.CreatedAt.ToString("MM/dd/yyyy")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="/leads/@lead.Id" class="btn btn-sm btn-outline-primary" title="View">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="/leads/@lead.Id/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-outline-success" @onclick="() => CallLead(lead.Id)" title="Call">
+                                                        <i class="fas fa-phone"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteLead(lead.Id)" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        @if (totalLeads > leads.Count)
+                        {
+                            <div class="text-center mt-3">
+                                <button class="btn btn-outline-primary" @onclick="LoadMoreLeads" disabled="@isLoadingMore">
+                                    @if (isLoadingMore)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    Load More (@(totalLeads - leads.Count) remaining)
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? ListId { get; set; }
+    
+    private List<LeadSummaryDto> leads = new();
+    private string? errorMessage;
+    private string? successMessage;
+    private string searchTerm = string.Empty;
+    private string statusFilter = string.Empty;
+    private int totalLeads = 0;
+    private int currentPage = 1;
+    private readonly int pageSize = 50;
+    private bool isLoadingMore = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLeads();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reset when ListId parameter changes
+        leads.Clear();
+        currentPage = 1;
+        await LoadLeads();
+    }
+
+    private async Task LoadLeads()
+    {
+        try
+        {
+            errorMessage = null;
+            var url = ListId.HasValue 
+                ? $"api/lists/{ListId}/leads?page={currentPage}&pageSize={pageSize}"
+                : $"api/leads?page={currentPage}&pageSize={pageSize}";
+                
+            if (!string.IsNullOrEmpty(searchTerm))
+                url += $"&search={Uri.EscapeDataString(searchTerm)}";
+                
+            if (!string.IsNullOrEmpty(statusFilter))
+                url += $"&status={statusFilter}";
+
+            var response = await Http.GetFromJsonAsync<LeadListResponseDto>(url);
+            if (response != null)
+            {
+                if (currentPage == 1)
+                {
+                    leads = response.Leads.ToList();
+                }
+                else
+                {
+                    leads.AddRange(response.Leads);
+                }
+                totalLeads = response.TotalCount;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load leads: {ex.Message}";
+        }
+    }
+
+    private async Task LoadMoreLeads()
+    {
+        try
+        {
+            isLoadingMore = true;
+            currentPage++;
+            await LoadLeads();
+        }
+        finally
+        {
+            isLoadingMore = false;
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        currentPage = 1;
+        leads.Clear();
+        await LoadLeads();
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ApplyFilters();
+        }
+    }
+
+    private void CallLead(int leadId)
+    {
+        try
+        {
+            // This would integrate with Azure Communication Services
+            successMessage = $"Initiating call to lead {leadId}...";
+            // TODO: Implement actual calling functionality
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to initiate call: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteLead(int leadId)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this lead? This action cannot be undone.");
+        
+        if (confirmed)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/leads/{leadId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    successMessage = "Lead deleted successfully.";
+                    await LoadLeads(); // Reload the list
+                }
+                else
+                {
+                    errorMessage = "Failed to delete lead.";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to delete lead: {ex.Message}";
+            }
+        }
+    }
+
+    private void ShowImportModal()
+    {
+        // TODO: Implement bulk import modal
+        errorMessage = "Import functionality will be implemented in a future update.";
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "New" => "bg-primary",
+            "Called" => "bg-info",
+            "Contacted" => "bg-success",
+            "NotInterested" => "bg-secondary",
+            "Callback" => "bg-warning",
+            "DoNotCall" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

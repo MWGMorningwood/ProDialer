@@ -1,0 +1,173 @@
+@* Generic Data Table Component - Reusable table with sorting and pagination *@
+@typeparam TItem
+
+<div class="card">
+    <div class="card-body">
+        @if (ShowHeader)
+        {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">@Title</h5>
+                @if (HeaderActions != null)
+                {
+                    @HeaderActions
+                }
+            </div>
+        }
+
+        @if (Items == null)
+        {
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else if (!Items.Any())
+        {
+            <div class="text-center">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@EmptyTitle</h5>
+                        <p class="card-text">@EmptyMessage</p>
+                        @if (EmptyAction != null)
+                        {
+                            @EmptyAction
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="@HeaderClass">
+                        <tr>
+                            @if (Columns != null)
+                            {
+                                @foreach (var column in Columns)
+                                {
+                                    <th class="@column.HeaderClass" style="@column.HeaderStyle">
+                                        @if (column.Sortable)
+                                        {
+                                            <button class="btn btn-link p-0 text-decoration-none text-reset" @onclick="() => OnSort(column.PropertyName)">
+                                                @column.Title
+                                                @if (SortColumn == column.PropertyName)
+                                                {
+                                                    <i class="fas @(SortDescending ? "fa-sort-down" : "fa-sort-up") ms-1"></i>
+                                                }
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            @column.Title
+                                        }
+                                    </th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Items)
+                        {
+                            <tr class="@(RowClassFunc?.Invoke(item))">
+                                @if (Columns != null)
+                                {
+                                    @foreach (var column in Columns)
+                                    {
+                                        <td class="@column.CellClass" style="@column.CellStyle">
+                                            @if (column.Template != null)
+                                            {
+                                                @column.Template(item)
+                                            }
+                                            else
+                                            {
+                                                @GetPropertyValue(item, column.PropertyName)
+                                            }
+                                        </td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            @if (ShowPagination && TotalCount > Items.Count())
+            {
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-primary" @onclick="OnLoadMore" disabled="@IsLoadingMore">
+                        @if (IsLoadingMore)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Load More (@(TotalCount - Items.Count()) remaining)
+                    </button>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public bool ShowHeader { get; set; } = true;
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+    [Parameter] public List<TableColumn<TItem>>? Columns { get; set; }
+    [Parameter] public Func<TItem, string>? RowClassFunc { get; set; }
+    
+    [Parameter] public string HeaderClass { get; set; } = "table-dark";
+    [Parameter] public string EmptyTitle { get; set; } = "No Data Found";
+    [Parameter] public string EmptyMessage { get; set; } = "No items to display.";
+    [Parameter] public RenderFragment? EmptyAction { get; set; }
+    
+    [Parameter] public bool ShowPagination { get; set; } = false;
+    [Parameter] public int TotalCount { get; set; } = 0;
+    [Parameter] public bool IsLoadingMore { get; set; } = false;
+    [Parameter] public EventCallback OnLoadMore { get; set; }
+    
+    [Parameter] public string SortColumn { get; set; } = string.Empty;
+    [Parameter] public bool SortDescending { get; set; } = false;
+    [Parameter] public EventCallback<(string Column, bool Descending)> OnSortChanged { get; set; }
+
+    private async Task OnSort(string columnName)
+    {
+        if (SortColumn == columnName)
+        {
+            SortDescending = !SortDescending;
+        }
+        else
+        {
+            SortColumn = columnName;
+            SortDescending = false;
+        }
+        
+        if (OnSortChanged.HasDelegate)
+        {
+            await OnSortChanged.InvokeAsync((SortColumn, SortDescending));
+        }
+    }
+
+    private object? GetPropertyValue(TItem item, string propertyName)
+    {
+        if (item == null || string.IsNullOrEmpty(propertyName))
+            return null;
+
+        var property = typeof(TItem).GetProperty(propertyName);
+        return property?.GetValue(item);
+    }
+
+    public class TableColumn<T>
+    {
+        public string Title { get; set; } = string.Empty;
+        public string PropertyName { get; set; } = string.Empty;
+        public bool Sortable { get; set; } = false;
+        public string HeaderClass { get; set; } = string.Empty;
+        public string HeaderStyle { get; set; } = string.Empty;
+        public string CellClass { get; set; } = string.Empty;
+        public string CellStyle { get; set; } = string.Empty;
+        public RenderFragment<T>? Template { get; set; }
+    }
+}

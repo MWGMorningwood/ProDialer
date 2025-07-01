@@ -1,0 +1,138 @@
+@* Input Group Component - Reusable form input with label and validation *@
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq.Expressions
+
+<div class="@ContainerClass">
+    <label for="@InputId" class="form-label">
+        @Label
+        @if (Required)
+        {
+            <span class="text-danger">*</span>
+        }
+    </label>
+    
+    @if (InputType == InputGroupType.Text)
+    {
+        <InputText id="@InputId" class="@InputClass" @bind-Value="TextValue" placeholder="@Placeholder" />
+    }
+    else if (InputType == InputGroupType.TextArea)
+    {
+        <InputTextArea id="@InputId" class="@InputClass" rows="@Rows" @bind-Value="TextValue" placeholder="@Placeholder" />
+    }
+    else if (InputType == InputGroupType.Number)
+    {
+        @if (DecimalValueChanged.HasDelegate)
+        {
+            <InputNumber id="@InputId" class="@InputClass" @bind-Value="DecimalValue" min="@Min" max="@Max" step="@Step" />
+        }
+        else if (NullableNumberValue.HasValue || NullableNumberValueChanged.HasDelegate)
+        {
+            <InputNumber id="@InputId" class="@InputClass" @bind-Value="NullableNumberValue" min="@Min" max="@Max" step="@Step" />
+        }
+        else
+        {
+            <InputNumber id="@InputId" class="@InputClass" @bind-Value="NumberValue" min="@Min" max="@Max" step="@Step" />
+        }
+    }
+    else if (InputType == InputGroupType.Select)
+    {
+        <InputSelect id="@InputId" class="@SelectClass" @bind-Value="TextValue">
+            @if (Options != null)
+            {
+                @foreach (var option in Options)
+                {
+                    <option value="@option.Value">@option.Text</option>
+                }
+            }
+        </InputSelect>
+    }
+    else if (InputType == InputGroupType.Checkbox)
+    {
+        <div class="form-check @(CheckboxInline ? "form-check-inline" : "")">
+            <InputCheckbox id="@InputId" class="form-check-input" @bind-Value="BoolValue" />
+            <label for="@InputId" class="form-check-label">
+                @CheckboxLabel
+            </label>
+        </div>
+    }
+    else if (InputType == InputGroupType.Date)
+    {
+        <InputDate id="@InputId" class="@InputClass" @bind-Value="DateValue" />
+    }
+    
+    @if (!string.IsNullOrEmpty(HelpText))
+    {
+        <div class="form-text">@HelpText</div>
+    }
+    
+    @if (ShowValidation && ValidationFor != null)
+    {
+        <ValidationMessage For="@ValidationFor" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string InputId { get; set; } = Guid.NewGuid().ToString();
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? HelpText { get; set; }
+    [Parameter] public bool Required { get; set; } = false;
+    [Parameter] public bool ShowValidation { get; set; } = true;
+    
+    [Parameter] public InputGroupType InputType { get; set; } = InputGroupType.Text;
+    
+    // Text inputs
+    [Parameter] public string TextValue { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> TextValueChanged { get; set; }
+    
+    // Number inputs
+    [Parameter] public int NumberValue { get; set; } = 0;
+    [Parameter] public EventCallback<int> NumberValueChanged { get; set; }
+    [Parameter] public int? NullableNumberValue { get; set; }
+    [Parameter] public EventCallback<int?> NullableNumberValueChanged { get; set; }
+    [Parameter] public decimal DecimalValue { get; set; } = 0;
+    [Parameter] public EventCallback<decimal> DecimalValueChanged { get; set; }
+    [Parameter] public int? Min { get; set; }
+    [Parameter] public int? Max { get; set; }
+    [Parameter] public decimal? Step { get; set; }
+    
+    // Boolean inputs
+    [Parameter] public bool BoolValue { get; set; } = false;
+    [Parameter] public EventCallback<bool> BoolValueChanged { get; set; }
+    [Parameter] public string CheckboxLabel { get; set; } = string.Empty;
+    [Parameter] public bool CheckboxInline { get; set; } = false;
+    
+    // Date inputs
+    [Parameter] public DateTime? DateValue { get; set; }
+    [Parameter] public EventCallback<DateTime?> DateValueChanged { get; set; }
+    
+    // Select inputs
+    [Parameter] public List<SelectOption>? Options { get; set; }
+    
+    // TextArea specific
+    [Parameter] public int Rows { get; set; } = 3;
+    
+    // Styling
+    [Parameter] public string ContainerClass { get; set; } = "mb-3";
+    [Parameter] public string InputClass { get; set; } = "form-control";
+    [Parameter] public string SelectClass { get; set; } = "form-select";
+    
+    // Validation
+    [Parameter] public Expression<Func<object>>? ValidationFor { get; set; }
+
+    public class SelectOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
+    public enum InputGroupType
+    {
+        Text,
+        TextArea,
+        Number,
+        Select,
+        Checkbox,
+        Date
+    }
+}

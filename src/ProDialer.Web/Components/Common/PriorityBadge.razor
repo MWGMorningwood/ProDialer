@@ -1,0 +1,48 @@
+@* Priority Badge Component - Displays priority with appropriate styling *@
+
+<span class="badge @GetPriorityClass()">
+    @if (ShowIcon)
+    {
+        <i class="@GetPriorityIcon() me-1"></i>
+    }
+    @Priority
+</span>
+
+@code {
+    [Parameter] public int Priority { get; set; } = 5;
+    [Parameter] public bool ShowIcon { get; set; } = false;
+    [Parameter] public string Size { get; set; } = "normal"; // small, normal, large
+
+    private string GetPriorityClass()
+    {
+        var colorClass = Priority switch
+        {
+            >= 9 => "bg-danger text-white",
+            >= 7 => "bg-warning text-dark",
+            >= 5 => "bg-primary text-white",
+            >= 3 => "bg-info text-white",
+            _ => "bg-secondary text-white"
+        };
+
+        var sizeClass = Size switch
+        {
+            "small" => "badge-sm",
+            "large" => "badge-lg",
+            _ => ""
+        };
+
+        return $"{colorClass} {sizeClass}".Trim();
+    }
+
+    private string GetPriorityIcon()
+    {
+        return Priority switch
+        {
+            >= 9 => "fas fa-exclamation-triangle",
+            >= 7 => "fas fa-arrow-up",
+            >= 5 => "fas fa-minus",
+            >= 3 => "fas fa-arrow-down",
+            _ => "fas fa-chevron-down"
+        };
+    }
+}

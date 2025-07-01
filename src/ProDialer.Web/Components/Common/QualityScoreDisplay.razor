@@ -1,0 +1,56 @@
+@* Quality Score Display Component - Shows score with progress bar *@
+
+<div class="d-flex align-items-center">
+    <div class="progress me-2" style="width: @(ProgressWidth)px; height: @(ProgressHeight)px;">
+        <div class="progress-bar @GetProgressBarClass()" 
+             style="width: @(Score)%" 
+             role="progressbar" 
+             aria-valuenow="@Score" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
+        </div>
+    </div>
+    @if (ShowScore)
+    {
+        <small class="@GetScoreTextClass()">@Score</small>
+    }
+</div>
+
+@code {
+    [Parameter] public int Score { get; set; } = 0;
+    [Parameter] public bool ShowScore { get; set; } = true;
+    [Parameter] public int ProgressWidth { get; set; } = 60;
+    [Parameter] public int ProgressHeight { get; set; } = 8;
+    [Parameter] public string Size { get; set; } = "normal"; // small, normal, large
+
+    private string GetProgressBarClass()
+    {
+        return Score switch
+        {
+            >= 80 => "bg-success",
+            >= 60 => "bg-info",
+            >= 40 => "bg-warning",
+            _ => "bg-danger"
+        };
+    }
+
+    private string GetScoreTextClass()
+    {
+        var baseClass = Size switch
+        {
+            "small" => "small",
+            "large" => "h6 mb-0",
+            _ => ""
+        };
+
+        var colorClass = Score switch
+        {
+            >= 80 => "text-success",
+            >= 60 => "text-info", 
+            >= 40 => "text-warning",
+            _ => "text-danger"
+        };
+
+        return $"{baseClass} {colorClass}".Trim();
+    }
+}

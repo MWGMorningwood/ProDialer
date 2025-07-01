@@ -1,0 +1,80 @@
+@* Status Badge Component - Displays status with appropriate styling *@
+
+<span class="badge @GetBadgeClass()">@Status</span>
+
+@code {
+    [Parameter] public string Status { get; set; } = string.Empty;
+    [Parameter] public string StatusType { get; set; } = "default"; // lead, campaign, agent, call
+
+    private string GetBadgeClass()
+    {
+        return StatusType.ToLower() switch
+        {
+            "lead" => GetLeadStatusClass(),
+            "campaign" => GetCampaignStatusClass(),
+            "agent" => GetAgentStatusClass(),
+            "call" => GetCallStatusClass(),
+            _ => GetDefaultStatusClass()
+        };
+    }
+
+    private string GetLeadStatusClass()
+    {
+        return Status.ToUpper() switch
+        {
+            "NEW" => "bg-primary",
+            "CALLED" => "bg-info",
+            "CONTACTED" => "bg-success",
+            "CALLBACK" => "bg-warning text-dark",
+            "DNC" or "DO_NOT_CALL" => "bg-danger",
+            "DISCONNECTED" => "bg-secondary",
+            "BUSY" => "bg-warning text-dark",
+            "ANSWERING_MACHINE" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetCampaignStatusClass()
+    {
+        return Status.ToUpper() switch
+        {
+            "ACTIVE" => "bg-success",
+            "PAUSED" => "bg-warning text-dark",
+            "STOPPED" => "bg-danger",
+            "SCHEDULED" => "bg-info",
+            "COMPLETED" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetAgentStatusClass()
+    {
+        return Status.ToUpper() switch
+        {
+            "AVAILABLE" => "bg-success",
+            "BUSY" => "bg-warning text-dark",
+            "BREAK" => "bg-info",
+            "OFFLINE" => "bg-secondary",
+            "IN_CALL" => "bg-primary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetCallStatusClass()
+    {
+        return Status.ToUpper() switch
+        {
+            "CONNECTED" => "bg-success",
+            "RINGING" => "bg-info",
+            "BUSY" => "bg-warning text-dark",
+            "NO_ANSWER" => "bg-secondary",
+            "FAILED" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetDefaultStatusClass()
+    {
+        return "bg-secondary";
+    }
+}

@@ -1,0 +1,76 @@
+@* Action Button Group Component - Reusable CRUD action buttons *@
+
+<div class="btn-group" role="group">
+    @if (ShowView)
+    {
+        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="OnView" title="View" disabled="@ViewDisabled">
+            <i class="fas fa-eye"></i>
+        </button>
+    }
+    
+    @if (ShowEdit)
+    {
+        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="OnEdit" title="Edit" disabled="@EditDisabled">
+            <i class="fas fa-edit"></i>
+        </button>
+    }
+    
+    @if (ShowCall && ShowCallButton)
+    {
+        <button type="button" class="btn btn-sm btn-outline-success" @onclick="OnCall" title="Call" disabled="@CallDisabled">
+            <i class="fas fa-phone"></i>
+        </button>
+    }
+    
+    @if (ShowCustomActions && CustomActions != null)
+    {
+        @foreach (var action in CustomActions)
+        {
+            <button type="button" class="btn btn-sm @action.CssClass" @onclick="() => action.OnClick.InvokeAsync()" title="@action.Title" disabled="@action.Disabled">
+                <i class="@action.Icon"></i>
+            </button>
+        }
+    }
+    
+    @if (ShowDelete)
+    {
+        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="OnDelete" title="Delete" disabled="@DeleteDisabled">
+            <i class="fas fa-trash"></i>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowView { get; set; } = true;
+    [Parameter] public bool ShowEdit { get; set; } = true;
+    [Parameter] public bool ShowCall { get; set; } = false;
+    [Parameter] public bool ShowDelete { get; set; } = true;
+    [Parameter] public bool ShowCustomActions { get; set; } = false;
+    
+    [Parameter] public bool ViewDisabled { get; set; } = false;
+    [Parameter] public bool EditDisabled { get; set; } = false;
+    [Parameter] public bool CallDisabled { get; set; } = false;
+    [Parameter] public bool DeleteDisabled { get; set; } = false;
+    
+    [Parameter] public EventCallback OnView { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnCall { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    
+    [Parameter] public List<CustomAction>? CustomActions { get; set; }
+    
+    // Logic to determine if call button should be shown (e.g., not for excluded leads)
+    [Parameter] public bool IsExcluded { get; set; } = false;
+    [Parameter] public bool HasOptedOut { get; set; } = false;
+    
+    private bool ShowCallButton => ShowCall && !IsExcluded && !HasOptedOut;
+
+    public class CustomAction
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public string CssClass { get; set; } = "btn-outline-info";
+        public bool Disabled { get; set; } = false;
+        public EventCallback OnClick { get; set; }
+    }
+}

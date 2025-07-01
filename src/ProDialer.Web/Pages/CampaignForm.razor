@@ -48,26 +48,28 @@
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">Campaign Name <span class="text-danger">*</span></label>
-                                        <InputText id="name" class="form-control" @bind-Value="campaignDto.Name" />
-                                        <ValidationMessage For="@(() => campaignDto.Name)" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Campaign Name" 
+                                        Required="true"
+                                        @bind-TextValue="campaignDto.Name" 
+                                        ValidationFor="@(() => campaignDto.Name)" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="priority" class="form-label">Campaign Priority</label>
-                                        <InputNumber id="priority" class="form-control" @bind-Value="campaignDto.Priority" min="1" max="10" />
-                                        <div class="form-text">Priority level (1-10, higher = more important)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Campaign Priority" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.Priority" 
+                                        Min="1" Max="10"
+                                        HelpText="Priority level (1-10, higher = more important)" />
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="campaignDto.Description" />
-                                <ValidationMessage For="@(() => campaignDto.Description)" />
-                            </div>
+                            <InputGroup 
+                                Label="Description" 
+                                InputType="InputGroup.InputGroupType.TextArea"
+                                @bind-TextValue="campaignDto.Description" 
+                                Rows="3"
+                                ValidationFor="@(() => campaignDto.Description)" />
 
                             <div class="row">
                                 <div class="col-md-4">
@@ -99,30 +101,29 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="hopperLevel" class="form-label">Hopper Level</label>
-                                        <InputNumber id="hopperLevel" class="form-control" @bind-Value="campaignDto.HopperLevel" min="10" max="10000" />
-                                        <div class="form-text">Number of leads to keep in hopper</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Hopper Level" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.HopperLevel" 
+                                        Min="10" Max="10000"
+                                        HelpText="Number of leads to keep in hopper" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="isActive" class="form-check-input" @bind-Value="campaignDto.IsActive" />
-                                        <label for="isActive" class="form-check-label">
-                                            Campaign is Active
-                                        </label>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Campaign Status" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="campaignDto.IsActive"
+                                        CheckboxLabel="Campaign is Active" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="allowInbound" class="form-check-input" @bind-Value="campaignDto.AllowInbound" />
-                                        <label for="allowInbound" class="form-check-label">
-                                            Allow Inbound Calls
-                                        </label>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Inbound Calls" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="campaignDto.AllowInbound"
+                                        CheckboxLabel="Allow Inbound Calls" />
                                 </div>
                             </div>
                         </div>
@@ -133,102 +134,96 @@
 
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="dialingRatio" class="form-label">Dialing Ratio <span class="text-danger">*</span></label>
-                                        <InputNumber id="dialingRatio" class="form-control" @bind-Value="campaignDto.DialingRatio" min="0.1" max="50" step="0.1" />
-                                        <div class="form-text">Calls per available agent</div>
-                                        <ValidationMessage For="@(() => campaignDto.DialingRatio)" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Dialing Ratio" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-DecimalValue="campaignDto.DialingRatio" 
+                                        Min="0" Max="50" Step="0.1m"
+                                        Required="true"
+                                        ValidationFor="@(() => campaignDto.DialingRatio)"
+                                        HelpText="Calls per available agent" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="adaptiveMaxLevel" class="form-label">Adaptive Max Level</label>
-                                        <InputNumber id="adaptiveMaxLevel" class="form-control" @bind-Value="campaignDto.AdaptiveMaxLevel" min="0.1" max="10" step="0.1" />
-                                        <div class="form-text">Maximum adaptive dialing level</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Adaptive Max Level" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-DecimalValue="campaignDto.AdaptiveMaxLevel" 
+                                        Min="0" Max="10" Step="0.1m"
+                                        HelpText="Maximum adaptive dialing level" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="maxDropPercentage" class="form-label">Max Drop Percentage</label>
-                                        <InputNumber id="maxDropPercentage" class="form-control" @bind-Value="campaignDto.MaxDropPercentage" min="0" max="100" step="0.1" />
-                                        <div class="form-text">Maximum allowable drop rate (%)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Max Drop Percentage" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-DecimalValue="campaignDto.MaxDropPercentage" 
+                                        Min="0" Max="100" Step="0.1m"
+                                        HelpText="Maximum allowable drop rate (%)" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="dialTimeout" class="form-label">Dial Timeout (seconds)</label>
-                                        <InputNumber id="dialTimeout" class="form-control" @bind-Value="campaignDto.DialTimeout" min="10" max="300" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Dial Timeout (seconds)" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.DialTimeout" 
+                                        Min="10" Max="300" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="maxConcurrentCalls" class="form-label">Max Concurrent Calls</label>
-                                        <InputNumber id="maxConcurrentCalls" class="form-control" @bind-Value="campaignDto.MaxConcurrentCalls" min="1" max="1000" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Max Concurrent Calls" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.MaxConcurrentCalls" 
+                                        Min="1" Max="1000" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="nextAgentCall" class="form-label">Agent Selection Method</label>
-                                        <InputSelect id="nextAgentCall" class="form-select" @bind-Value="campaignDto.NextAgentCall">
-                                            <option value="longest_wait_time">Longest Wait Time</option>
-                                            <option value="overall_user_level">Overall User Level</option>
-                                            <option value="campaign_grade_level">Campaign Grade Level</option>
-                                            <option value="random">Random</option>
-                                            <option value="fewest_calls">Fewest Calls</option>
-                                            <option value="fewest_calls_campaign">Fewest Calls Campaign</option>
-                                        </InputSelect>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Agent Selection Method" 
+                                        InputType="InputGroup.InputGroupType.Select"
+                                        @bind-TextValue="campaignDto.NextAgentCall"
+                                        Options="@AgentSelectionOptions" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="applyRatioToIdleAgentsOnly" class="form-check-input" @bind-Value="campaignDto.ApplyRatioToIdleAgentsOnly" />
-                                        <label for="applyRatioToIdleAgentsOnly" class="form-check-label">
-                                            Apply Ratio to Idle Agents Only
-                                        </label>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Ratio Application" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="campaignDto.ApplyRatioToIdleAgentsOnly"
+                                        CheckboxLabel="Apply Ratio to Idle Agents Only" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="availableOnlyRatioTally" class="form-check-input" @bind-Value="campaignDto.AvailableOnlyRatioTally" />
-                                        <label for="availableOnlyRatioTally" class="form-check-label">
-                                            Available Only Ratio Tally
-                                        </label>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Ratio Tally" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="campaignDto.AvailableOnlyRatioTally"
+                                        CheckboxLabel="Available Only Ratio Tally" />
                                 </div>
                             </div>
 
                             <h6 class="mt-4 mb-3">Dial Prefixes & Extensions</h6>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="dialPrefix" class="form-label">Dial Prefix</label>
-                                        <InputText id="dialPrefix" class="form-control" @bind-Value="campaignDto.DialPrefix" />
-                                        <div class="form-text">Prefix for outbound calls</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Dial Prefix" 
+                                        @bind-TextValue="campaignDto.DialPrefix"
+                                        HelpText="Prefix for outbound calls" />
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="manualDialPrefix" class="form-label">Manual Dial Prefix</label>
-                                        <InputText id="manualDialPrefix" class="form-control" @bind-Value="campaignDto.ManualDialPrefix" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Manual Dial Prefix" 
+                                        @bind-TextValue="campaignDto.ManualDialPrefix" />
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="threeWayDialPrefix" class="form-label">3-Way Dial Prefix</label>
-                                        <InputText id="threeWayDialPrefix" class="form-control" @bind-Value="campaignDto.ThreeWayDialPrefix" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="3-Way Dial Prefix" 
+                                        @bind-TextValue="campaignDto.ThreeWayDialPrefix" />
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="parkExtension" class="form-label">Park Extension</label>
-                                        <InputText id="parkExtension" class="form-control" @bind-Value="campaignDto.ParkExtension" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Park Extension" 
+                                        @bind-TextValue="campaignDto.ParkExtension" />
                                 </div>
                             </div>
                         </div>
@@ -239,25 +234,28 @@
 
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
-                                        <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="campaignDto.MaxCallAttempts" min="1" max="20" />
-                                        <div class="form-text">Maximum attempts per lead</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Max Call Attempts" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.MaxCallAttempts" 
+                                        Min="1" Max="20"
+                                        HelpText="Maximum attempts per lead" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="callAttemptDelay" class="form-label">Call Attempt Delay (min)</label>
-                                        <InputNumber id="callAttemptDelay" class="form-control" @bind-Value="campaignDto.CallAttemptDelay" min="1" max="10080" />
-                                        <div class="form-text">Minutes between attempts</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Call Attempt Delay (min)" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.CallAttemptDelay" 
+                                        Min="1" Max="10080"
+                                        HelpText="Minutes between attempts" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="minCallInterval" class="form-label">Min Call Interval (min)</label>
-                                        <InputNumber id="minCallInterval" class="form-control" @bind-Value="campaignDto.MinCallInterval" min="1" max="1440" />
-                                        <div class="form-text">Minimum time between calls to same lead</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Min Call Interval (min)" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="campaignDto.MinCallInterval" 
+                                        Min="1" Max="1440"
+                                        HelpText="Minimum time between calls to same lead" />
                                 </div>
                             </div>
 
@@ -720,4 +718,24 @@
     {
         Navigation.NavigateTo("/campaigns");
     }
+
+    // Option lists for InputGroup components
+    private List<InputGroup.SelectOption> DialMethodOptions => new()
+    {
+        new() { Value = "MANUAL", Text = "Manual" },
+        new() { Value = "RATIO", Text = "Ratio" },
+        new() { Value = "ADAPT_HARD_LIMIT", Text = "Adaptive (Hard Limit)" },
+        new() { Value = "ADAPT_TAPERED", Text = "Adaptive (Tapered)" },
+        new() { Value = "ADAPT_AVERAGE", Text = "Adaptive (Average)" }
+    };
+
+    private List<InputGroup.SelectOption> AgentSelectionOptions => new()
+    {
+        new() { Value = "longest_wait_time", Text = "Longest Wait Time" },
+        new() { Value = "overall_user_level", Text = "Overall User Level" },
+        new() { Value = "campaign_grade_level", Text = "Campaign Grade Level" },
+        new() { Value = "random", Text = "Random" },
+        new() { Value = "fewest_calls", Text = "Fewest Calls" },
+        new() { Value = "fewest_calls_campaign", Text = "Fewest Calls Campaign" }
+    };
 }

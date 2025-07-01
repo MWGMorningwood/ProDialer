@@ -1,0 +1,47 @@
+@* Status Overview Row Component - Container for multiple status cards *@
+
+<div class="row mb-@MarginBottom">
+    @if (StatusItems != null)
+    {
+        @foreach (var item in StatusItems)
+        {
+            <StatusOverviewCard 
+                Title="@item.Title"
+                Count="@item.Count"
+                Subtitle="@item.Subtitle"
+                Icon="@item.Icon"
+                ColumnSize="@item.ColumnSize"
+                BackgroundClass="@item.BackgroundClass"
+                ShowTrend="@item.ShowTrend"
+                TrendValue="@item.TrendValue"
+                TrendLabel="@item.TrendLabel"
+                OnClick="@item.OnClick"
+                ClickText="@item.ClickText" />
+        }
+    }
+    else
+    {
+        @ChildContent
+    }
+</div>
+
+@code {
+    [Parameter] public List<StatusOverviewItem>? StatusItems { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public int MarginBottom { get; set; } = 4;
+
+    public class StatusOverviewItem
+    {
+        public string Title { get; set; } = string.Empty;
+        public int Count { get; set; } = 0;
+        public string? Subtitle { get; set; }
+        public string? Icon { get; set; }
+        public int ColumnSize { get; set; } = 3;
+        public string BackgroundClass { get; set; } = "bg-primary";
+        public bool ShowTrend { get; set; } = false;
+        public decimal? TrendValue { get; set; }
+        public string TrendLabel { get; set; } = "from last period";
+        public EventCallback OnClick { get; set; }
+        public string ClickText { get; set; } = "View Details";
+    }
+}

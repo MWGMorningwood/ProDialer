@@ -1,0 +1,78 @@
+@* Status Overview Card Component - Reusable status summary cards *@
+
+<div class="col-md-@ColumnSize">
+    <div class="card @BackgroundClass text-white">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-1">@Title</h5>
+                        <h2 class="mb-0">@Count</h2>
+                    </div>
+                    <div class="opacity-75">
+                        <i class="@Icon fa-2x"></i>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <h5 class="card-title">@Title</h5>
+                <h2>@Count</h2>
+            }
+            
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <small class="opacity-75">@Subtitle</small>
+            }
+            
+            @if (ShowTrend && TrendValue.HasValue)
+            {
+                <div class="mt-2">
+                    <small class="opacity-75">
+                        @if (TrendValue > 0)
+                        {
+                            <i class="fas fa-arrow-up me-1"></i><span>+@TrendValue%</span>
+                        }
+                        else if (TrendValue < 0)
+                        {
+                            <i class="fas fa-arrow-down me-1"></i><span>@TrendValue%</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-minus me-1"></i><span>0%</span>
+                        }
+                        @TrendLabel
+                    </small>
+                </div>
+            }
+        </div>
+        
+        @if (OnClick.HasDelegate)
+        {
+            <div class="card-footer bg-transparent border-0">
+                <button class="btn btn-link text-white p-0 text-decoration-none" @onclick="OnClick">
+                    <small>@ClickText <i class="fas fa-arrow-right ms-1"></i></small>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public int Count { get; set; } = 0;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public int ColumnSize { get; set; } = 3;
+    
+    [Parameter] public string BackgroundClass { get; set; } = "bg-primary";
+    [Parameter] public string? CustomColor { get; set; }
+    
+    [Parameter] public bool ShowTrend { get; set; } = false;
+    [Parameter] public decimal? TrendValue { get; set; }
+    [Parameter] public string TrendLabel { get; set; } = "from last period";
+    
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public string ClickText { get; set; } = "View Details";
+}

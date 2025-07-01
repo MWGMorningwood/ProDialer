@@ -48,92 +48,83 @@
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">List Name <span class="text-danger">*</span></label>
-                                        <InputText id="name" class="form-control" @bind-Value="listDto.Name" />
-                                        <ValidationMessage For="@(() => listDto.Name)" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="List Name" 
+                                        Required="true"
+                                        @bind-TextValue="listDto.Name" 
+                                        ValidationFor="@(() => listDto.Name)" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="priority" class="form-label">Priority</label>
-                                        <InputNumber id="priority" class="form-control" @bind-Value="listDto.Priority" min="1" max="10" />
-                                        <div class="form-text">Priority level (1-10, higher = more important)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Priority" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NumberValue="listDto.Priority" 
+                                        Min="1" Max="10"
+                                        HelpText="Priority level (1-10, higher = more important)" />
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="listDto.Description" />
-                                <ValidationMessage For="@(() => listDto.Description)" />
-                            </div>
+                            <InputGroup 
+                                Label="Description" 
+                                InputType="InputGroup.InputGroupType.TextArea"
+                                @bind-TextValue="listDto.Description" 
+                                Rows="3"
+                                ValidationFor="@(() => listDto.Description)" />
 
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="callStrategy" class="form-label">Call Strategy</label>
-                                        <InputSelect id="callStrategy" class="form-select" @bind-Value="listDto.CallStrategy">
-                                            <option value="Sequential">Sequential</option>
-                                            <option value="Random">Random</option>
-                                            <option value="Priority">Priority-based</option>
-                                        </InputSelect>
-                                        <div class="form-text">How leads are selected from this list</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Call Strategy" 
+                                        InputType="InputGroup.InputGroupType.Select"
+                                        @bind-TextValue="listDto.CallStrategy"
+                                        Options="@CallStrategyOptions" 
+                                        HelpText="How leads are selected from this list" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="source" class="form-label">Source</label>
-                                        <InputSelect id="source" class="form-select" @bind-Value="listDto.Source">
-                                            <option value="Manual">Manual Entry</option>
-                                            <option value="Import">Data Import</option>
-                                            <option value="API">API Integration</option>
-                                            <option value="Web">Web Form</option>
-                                            <option value="Partner">Partner Feed</option>
-                                        </InputSelect>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Source" 
+                                        InputType="InputGroup.InputGroupType.Select"
+                                        @bind-TextValue="listDto.Source"
+                                        Options="@SourceOptions" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="listMixRatio" class="form-label">Mix Ratio</label>
-                                        <InputNumber id="listMixRatio" class="form-control" @bind-Value="listDto.ListMixRatio" min="0.1" max="100" step="0.1" />
-                                        <div class="form-text">Weight for list mixing (1.0 = normal)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Mix Ratio" 
+                                        InputType="InputGroup.InputGroupType.Text"
+                                        @bind-TextValue="listMixRatioText"
+                                        HelpText="Weight for list mixing (1.0 = normal)" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="sourceReference" class="form-label">Source Reference</label>
-                                        <InputText id="sourceReference" class="form-control" @bind-Value="listDto.SourceReference" />
-                                        <div class="form-text">Reference ID or external identifier</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Source Reference" 
+                                        @bind-TextValue="listDto.SourceReference"
+                                        HelpText="Reference ID or external identifier" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="tags" class="form-label">Tags</label>
-                                        <InputText id="tags" class="form-control" @bind-Value="listDto.Tags" />
-                                        <div class="form-text">Comma-separated tags for organization</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Tags" 
+                                        @bind-TextValue="listDto.Tags"
+                                        HelpText="Comma-separated tags for organization" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="isActive" class="form-check-input" @bind-Value="listDto.IsActive" />
-                                        <label for="isActive" class="form-check-label">
-                                            List is Active
-                                        </label>
-                                    </div>
+                                    <InputGroup 
+                                        Label="List is Active" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="listDto.IsActive"
+                                        CheckboxInline="false" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="expirationDate" class="form-label">Expiration Date</label>
-                                        <InputDate id="expirationDate" class="form-control" @bind-Value="listDto.ExpirationDate" />
-                                        <div class="form-text">Optional expiration date for the list</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Expiration Date" 
+                                        InputType="InputGroup.InputGroupType.Date"
+                                        @bind-DateValue="listDto.ExpirationDate"
+                                        HelpText="Optional expiration date for the list" />
                                 </div>
                             </div>
                         </div>
@@ -144,89 +135,81 @@
 
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
-                                        <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="listDto.MaxCallAttempts" min="1" max="20" />
-                                        <div class="form-text">Override campaign setting (leave empty for default)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Max Call Attempts" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NullableNumberValue="listDto.MaxCallAttempts" 
+                                        Min="1" Max="20"
+                                        HelpText="Override campaign setting (leave empty for default)" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="minCallInterval" class="form-label">Min Call Interval (min)</label>
-                                        <InputNumber id="minCallInterval" class="form-control" @bind-Value="listDto.MinCallInterval" min="1" max="10080" />
-                                        <div class="form-text">Override campaign setting (leave empty for default)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Min Call Interval (min)" 
+                                        InputType="InputGroup.InputGroupType.Number"
+                                        @bind-NullableNumberValue="listDto.MinCallInterval" 
+                                        Min="1" Max="10080"
+                                        HelpText="Minutes between calls to same lead" />
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label for="duplicateCheckMethod" class="form-label">Duplicate Check Method</label>
-                                        <InputSelect id="duplicateCheckMethod" class="form-select" @bind-Value="listDto.DuplicateCheckMethod">
-                                            <option value="PHONE">Phone Number</option>
-                                            <option value="EMAIL">Email Address</option>
-                                            <option value="PHONE_EMAIL">Phone and Email</option>
-                                            <option value="CUSTOM">Custom Field</option>
-                                            <option value="NONE">No Duplicate Check</option>
-                                        </InputSelect>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Reset Time" 
+                                        @bind-TextValue="listDto.ResetTime" 
+                                        HelpText="Time when list resets (HH:MM format)" />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <InputGroup 
+                                        Label="Duplicate Check Method" 
+                                        InputType="InputGroup.InputGroupType.Select"
+                                        @bind-TextValue="listDto.DuplicateCheckMethod"
+                                        Options="@DuplicateCheckOptions" />
                                 </div>
                             </div>
 
                             <h6 class="mt-4 mb-3">Time Zone & Calling Hours Override</h6>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="timeZoneOverride" class="form-label">Time Zone Override</label>
-                                        <InputSelect id="timeZoneOverride" class="form-select" @bind-Value="listDto.TimeZoneOverride">
-                                            <option value="">Use Campaign Setting</option>
-                                            <option value="UTC">UTC</option>
-                                            <option value="America/New_York">Eastern Time</option>
-                                            <option value="America/Chicago">Central Time</option>
-                                            <option value="America/Denver">Mountain Time</option>
-                                            <option value="America/Los_Angeles">Pacific Time</option>
-                                        </InputSelect>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Time Zone Override" 
+                                        InputType="InputGroup.InputGroupType.Select"
+                                        @bind-TextValue="listDto.TimeZoneOverride"
+                                        Options="@TimeZoneOptions" />
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="callStartTimeOverride" class="form-label">Call Start Time</label>
-                                        <InputText id="callStartTimeOverride" class="form-control" @bind-Value="listDto.CallStartTimeOverride" />
-                                        <div class="form-text">Format: HH:MM (24-hour)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Call Start Time" 
+                                        @bind-TextValue="listDto.CallStartTimeOverride"
+                                        HelpText="Format: HH:MM (24-hour)" />
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="callEndTimeOverride" class="form-label">Call End Time</label>
-                                        <InputText id="callEndTimeOverride" class="form-control" @bind-Value="listDto.CallEndTimeOverride" />
-                                        <div class="form-text">Format: HH:MM (24-hour)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Call End Time" 
+                                        @bind-TextValue="listDto.CallEndTimeOverride"
+                                        HelpText="Format: HH:MM (24-hour)" />
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="mb-3">
-                                        <label for="timezoneMethod" class="form-label">Timezone Method</label>
-                                        <InputSelect id="timezoneMethod" class="form-select" @bind-Value="listDto.TimezoneMethod">
-                                            <option value="COUNTRY_AND_AREA_CODE">Country & Area Code</option>
-                                            <option value="POSTAL_CODE">Postal Code</option>
-                                            <option value="OWNER_TIME_ZONE_CODE">Owner Timezone</option>
-                                            <option value="PHONE_CODE">Phone Code</option>
-                                        </InputSelect>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Timezone Method" 
+                                        InputType="InputGroup.InputGroupType.Select"
+                                        @bind-TextValue="listDto.TimezoneMethod"
+                                        Options="@TimezoneMethodOptions" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="allowedDaysOverride" class="form-label">Allowed Days Override</label>
-                                        <InputText id="allowedDaysOverride" class="form-control" @bind-Value="listDto.AllowedDaysOverride" />
-                                        <div class="form-text">Comma-separated: Monday,Tuesday,Wednesday,Thursday,Friday</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Allowed Days Override" 
+                                        @bind-TextValue="listDto.AllowedDaysOverride"
+                                        HelpText="Comma-separated: Monday,Tuesday,Wednesday,Thursday,Friday" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="localCallTime" class="form-label">Local Call Time</label>
-                                        <InputText id="localCallTime" class="form-control" @bind-Value="listDto.LocalCallTime" />
-                                        <div class="form-text">Local calling time rules</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Local Call Time" 
+                                        @bind-TextValue="listDto.LocalCallTime"
+                                        HelpText="Local calling time rules" />
                                 </div>
                             </div>
                         </div>
@@ -237,164 +220,150 @@
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="scriptId" class="form-label">Script ID</label>
-                                        <InputText id="scriptId" class="form-control" @bind-Value="listDto.ScriptId" />
-                                        <div class="form-text">Agent script override for this list</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Script ID" 
+                                        @bind-TextValue="listDto.ScriptId"
+                                        HelpText="Agent script override for this list" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="campaignCallerIdOverride" class="form-label">Caller ID Override</label>
-                                        <InputText id="campaignCallerIdOverride" class="form-control" @bind-Value="listDto.CampaignCallerIdOverride" />
-                                        <div class="form-text">Override campaign caller ID for this list</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Caller ID Override" 
+                                        @bind-TextValue="listDto.CampaignCallerIdOverride"
+                                        HelpText="Override campaign caller ID for this list" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="customFieldsCopy" class="form-check-input" @bind-Value="listDto.CustomFieldsCopy" />
-                                        <label for="customFieldsCopy" class="form-check-label">
-                                            Allow Custom Fields Copy
-                                        </label>
-                                        <div class="form-text">Allow copying custom fields between leads</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Custom Field Settings" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="listDto.CustomFieldsCopy"
+                                        CheckboxLabel="Allow Custom Fields Copy"
+                                        HelpText="Allow copying custom fields between leads" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="customFieldsModify" class="form-check-input" @bind-Value="listDto.CustomFieldsModify" />
-                                        <label for="customFieldsModify" class="form-check-label">
-                                            Allow Custom Fields Modify
-                                        </label>
-                                        <div class="form-text">Allow agents to modify custom fields</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Custom Field Modification" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="listDto.CustomFieldsModify"
+                                        CheckboxLabel="Allow Custom Fields Modify"
+                                        HelpText="Allow agents to modify custom fields" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check mb-3">
-                                        <InputCheckbox id="resetLeadCalledCount" class="form-check-input" @bind-Value="listDto.ResetLeadCalledCount" />
-                                        <label for="resetLeadCalledCount" class="form-check-label">
-                                            Reset Lead Called Count
-                                        </label>
-                                        <div class="form-text">Reset call count when recycling leads</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Lead Call Count" 
+                                        InputType="InputGroup.InputGroupType.Checkbox"
+                                        @bind-BoolValue="listDto.ResetLeadCalledCount"
+                                        CheckboxLabel="Reset Lead Called Count"
+                                        HelpText="Reset call count when recycling leads" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="resetTime" class="form-label">Reset Time</label>
-                                        <InputText id="resetTime" class="form-control" @bind-Value="listDto.ResetTime" />
-                                        <div class="form-text">Daily reset time (HH:MM format)</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Reset Time" 
+                                        @bind-TextValue="listDto.ResetTime"
+                                        HelpText="Daily reset time (HH:MM format)" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="answeringMachineMessage" class="form-label">Answering Machine Message</label>
-                                        <InputText id="answeringMachineMessage" class="form-control" @bind-Value="listDto.AnsweringMachineMessage" />
-                                        <div class="form-text">Custom AMD message for this list</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Answering Machine Message" 
+                                        @bind-TextValue="listDto.AnsweringMachineMessage"
+                                        HelpText="Custom AMD message for this list" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="dropInGroup" class="form-label">Drop In Group</label>
-                                        <InputText id="dropInGroup" class="form-control" @bind-Value="listDto.DropInGroup" />
-                                        <div class="form-text">Group for dropped calls</div>
-                                    </div>
+                                    <InputGroup 
+                                        Label="Drop In Group" 
+                                        @bind-TextValue="listDto.DropInGroup"
+                                        HelpText="Group for dropped calls" />
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="phoneValidationSettings" class="form-label">Phone Validation Settings</label>
-                                <InputTextArea id="phoneValidationSettings" class="form-control" rows="3" @bind-Value="listDto.PhoneValidationSettings" />
-                                <div class="form-text">JSON configuration for phone validation rules</div>
-                            </div>
+                            <InputGroup 
+                                Label="Phone Validation Settings" 
+                                InputType="InputGroup.InputGroupType.TextArea"
+                                @bind-TextValue="listDto.PhoneValidationSettings"
+                                Rows="3"
+                                HelpText="JSON configuration for phone validation rules" />
 
-                            <div class="mb-3">
-                                <label for="customFieldsSchema" class="form-label">Custom Fields Schema</label>
-                                <InputTextArea id="customFieldsSchema" class="form-control" rows="4" @bind-Value="listDto.CustomFieldsSchema" />
-                                <div class="form-text">JSON configuration for custom fields schema</div>
-                            </div>
+                            <InputGroup 
+                                Label="Custom Fields Schema" 
+                                InputType="InputGroup.InputGroupType.TextArea"
+                                @bind-TextValue="listDto.CustomFieldsSchema"
+                                Rows="4"
+                                HelpText="JSON configuration for custom fields schema" />
                         </div>
 
                         <!-- Web Forms Tab -->
                         <div class="tab-content" style="display: @(activeTab == "forms" ? "block" : "none")">
                             <h5 class="mb-3 text-primary">Web Form Configuration</h5>
 
-                            <div class="mb-3">
-                                <label for="webFormAddress" class="form-label">Primary Web Form Address</label>
-                                <InputText id="webFormAddress" class="form-control" @bind-Value="listDto.WebFormAddress" />
-                                <div class="form-text">URL for primary web form integration</div>
-                            </div>
+                            <InputGroup 
+                                Label="Primary Web Form Address" 
+                                @bind-TextValue="listDto.WebFormAddress"
+                                HelpText="URL for primary web form integration" />
 
-                            <div class="mb-3">
-                                <label for="webFormAddress2" class="form-label">Secondary Web Form Address</label>
-                                <InputText id="webFormAddress2" class="form-control" @bind-Value="listDto.WebFormAddress2" />
-                                <div class="form-text">URL for secondary web form integration</div>
-                            </div>
+                            <InputGroup 
+                                Label="Secondary Web Form Address" 
+                                @bind-TextValue="listDto.WebFormAddress2"
+                                HelpText="URL for secondary web form integration" />
 
-                            <div class="mb-3">
-                                <label for="webFormAddress3" class="form-label">Tertiary Web Form Address</label>
-                                <InputText id="webFormAddress3" class="form-control" @bind-Value="listDto.WebFormAddress3" />
-                                <div class="form-text">URL for tertiary web form integration</div>
-                            </div>
+                            <InputGroup 
+                                Label="Tertiary Web Form Address" 
+                                @bind-TextValue="listDto.WebFormAddress3"
+                                HelpText="URL for tertiary web form integration" />
 
-                            <div class="mb-3">
-                                <label for="agentScriptOverride" class="form-label">Agent Script Override</label>
-                                <InputTextArea id="agentScriptOverride" class="form-control" rows="5" @bind-Value="listDto.AgentScriptOverride" />
-                                <div class="form-text">Custom agent script content for this list</div>
-                            </div>
+                            <InputGroup 
+                                Label="Agent Script Override" 
+                                InputType="InputGroup.InputGroupType.TextArea"
+                                @bind-TextValue="listDto.AgentScriptOverride"
+                                Rows="5"
+                                HelpText="Custom agent script content for this list" />
                         </div>
 
                         <!-- Transfer Configuration Tab -->
                         <div class="tab-content" style="display: @(activeTab == "transfer" ? "block" : "none")">
                             <h5 class="mb-3 text-primary">Transfer Configuration</h5>
 
-                            <div class="mb-3">
-                                <label for="outboundCallerId" class="form-label">Outbound Caller ID</label>
-                                <InputText id="outboundCallerId" class="form-control" @bind-Value="listDto.OutboundCallerId" />
-                                <div class="form-text">Caller ID for outbound transfers</div>
-                            </div>
+                            <InputGroup 
+                                Label="Outbound Caller ID" 
+                                @bind-TextValue="listDto.OutboundCallerId"
+                                HelpText="Caller ID for outbound transfers" />
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="transferConf1" class="form-label">Transfer Conference 1</label>
-                                        <InputText id="transferConf1" class="form-control" @bind-Value="listDto.TransferConf1" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Transfer Conference 1" 
+                                        @bind-TextValue="listDto.TransferConf1" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="transferConf2" class="form-label">Transfer Conference 2</label>
-                                        <InputText id="transferConf2" class="form-control" @bind-Value="listDto.TransferConf2" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Transfer Conference 2" 
+                                        @bind-TextValue="listDto.TransferConf2" />
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="transferConf3" class="form-label">Transfer Conference 3</label>
-                                        <InputText id="transferConf3" class="form-control" @bind-Value="listDto.TransferConf3" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Transfer Conference 3" 
+                                        @bind-TextValue="listDto.TransferConf3" />
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="transferConf4" class="form-label">Transfer Conference 4</label>
-                                        <InputText id="transferConf4" class="form-control" @bind-Value="listDto.TransferConf4" />
-                                    </div>
+                                    <InputGroup 
+                                        Label="Transfer Conference 4" 
+                                        @bind-TextValue="listDto.TransferConf4" />
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="transferConf5" class="form-label">Transfer Conference 5</label>
-                                <InputText id="transferConf5" class="form-control" @bind-Value="listDto.TransferConf5" />
-                            </div>
+                            <InputGroup 
+                                Label="Transfer Conference 5" 
+                                @bind-TextValue="listDto.TransferConf5" />
                         </div>
 
                         <hr class="my-4" />
@@ -594,5 +563,62 @@
     private void GoBack()
     {
         Navigation.NavigateTo("/lists");
+    }
+
+    // Option lists for InputGroup components
+    private List<InputGroup.SelectOption> CallStrategyOptions => new()
+    {
+        new() { Value = "Sequential", Text = "Sequential" },
+        new() { Value = "Random", Text = "Random" },
+        new() { Value = "Priority", Text = "Priority-based" }
+    };
+
+    private List<InputGroup.SelectOption> SourceOptions => new()
+    {
+        new() { Value = "Manual", Text = "Manual Entry" },
+        new() { Value = "Import", Text = "Data Import" },
+        new() { Value = "API", Text = "API Integration" },
+        new() { Value = "Web", Text = "Web Form" },
+        new() { Value = "Partner", Text = "Partner Feed" }
+    };
+
+    private List<InputGroup.SelectOption> DuplicateCheckOptions => new()
+    {
+        new() { Value = "PHONE", Text = "Phone Number" },
+        new() { Value = "EMAIL", Text = "Email Address" },
+        new() { Value = "PHONE_EMAIL", Text = "Phone and Email" },
+        new() { Value = "CUSTOM", Text = "Custom Field" },
+        new() { Value = "NONE", Text = "No Duplicate Check" }
+    };
+
+    private List<InputGroup.SelectOption> TimeZoneOptions => new()
+    {
+        new() { Value = "", Text = "Use Campaign Setting" },
+        new() { Value = "UTC", Text = "UTC" },
+        new() { Value = "America/New_York", Text = "Eastern Time" },
+        new() { Value = "America/Chicago", Text = "Central Time" },
+        new() { Value = "America/Denver", Text = "Mountain Time" },
+        new() { Value = "America/Los_Angeles", Text = "Pacific Time" }
+    };
+
+    private List<InputGroup.SelectOption> TimezoneMethodOptions => new()
+    {
+        new() { Value = "COUNTRY_AND_AREA_CODE", Text = "Country & Area Code" },
+        new() { Value = "POSTAL_CODE", Text = "Postal Code" },
+        new() { Value = "OWNER_TIME_ZONE_CODE", Text = "Owner Timezone" },
+        new() { Value = "PHONE_CODE", Text = "Phone Code" }
+    };
+
+    // Helper property for decimal to string conversion
+    private string listMixRatioText
+    {
+        get => listDto.ListMixRatio.ToString();
+        set 
+        { 
+            if (decimal.TryParse(value, out var result))
+                listDto.ListMixRatio = result;
+            else
+                listDto.ListMixRatio = 1.0m;
+        }
     }
 }

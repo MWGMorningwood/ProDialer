@@ -1,5 +1,6 @@
 @page "/agents"
 @using ProDialer.Shared.DTOs
+@using ProDialer.Web.Components.Common
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -55,163 +56,144 @@
                     <div class="col-md-3">
                         <div class="card bg-success text-white">
                             <div class="card-body">
-                                <h5 class="card-title">Available</h5>
-                                <h2>@agents.Count(a => a.Status == "Available")</h2>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title mb-1">Available</h5>
+                                        <h2 class="mb-0">@agents.Count(a => a.Status == "Available")</h2>
+                                    </div>
+                                    <div class="opacity-75">
+                                        <i class="fas fa-user-check fa-2x"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card bg-warning text-white">
                             <div class="card-body">
-                                <h5 class="card-title">Busy</h5>
-                                <h2>@agents.Count(a => a.Status == "Busy")</h2>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title mb-1">Busy</h5>
+                                        <h2 class="mb-0">@agents.Count(a => a.Status == "Busy")</h2>
+                                    </div>
+                                    <div class="opacity-75">
+                                        <i class="fas fa-phone fa-2x"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card bg-info text-white">
                             <div class="card-body">
-                                <h5 class="card-title">On Break</h5>
-                                <h2>@agents.Count(a => a.Status == "OnBreak")</h2>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title mb-1">On Break</h5>
+                                        <h2 class="mb-0">@agents.Count(a => a.Status == "OnBreak")</h2>
+                                    </div>
+                                    <div class="opacity-75">
+                                        <i class="fas fa-pause-circle fa-2x"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card bg-secondary text-white">
                             <div class="card-body">
-                                <h5 class="card-title">Offline</h5>
-                                <h2>@agents.Count(a => a.Status == "Offline")</h2>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title mb-1">Offline</h5>
+                                        <h2 class="mb-0">@agents.Count(a => a.Status == "Offline")</h2>
+                                    </div>
+                                    <div class="opacity-75">
+                                        <i class="fas fa-user-slash fa-2x"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Phone</th>
-                                        <th>Status</th>
-                                        <th>Current Call</th>
-                                        <th>Total Calls</th>
-                                        <th>Last Login</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var agent in agents)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="status-indicator me-2 @GetStatusIndicatorClass(agent.Status)"></div>
-                                                    <div>
-                                                        <strong>@agent.FirstName @agent.LastName</strong>
-                                                        @if (!string.IsNullOrEmpty(agent.Role))
-                                                        {
-                                                            <br /><small class="text-muted">@agent.Role</small>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(agent.Email))
-                                                {
-                                                    <a href="mailto:@agent.Email">@agent.Email</a>
-                                                }
-                                            </td>
-                                            <td>@(agent.PhoneNumber ?? "N/A")</td>
-                                            <td>
-                                                <span class="badge @GetStatusBadgeClass(agent.Status)">@agent.Status</span>
-                                            </td>
-                                            <td>
-                                                <span class="text-muted">None</span>
-                                            </td>
-                                            <td>@agent.TotalCalls</td>
-                                            <td>
-                                                @if (agent.LastLoggedOutAt.HasValue)
-                                                {
-                                                    @agent.LastLoggedOutAt.Value.ToString("MM/dd/yyyy HH:mm")
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">Never</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <a href="/agents/@agent.Id" class="btn btn-sm btn-outline-primary" title="View">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <a href="/agents/@agent.Id/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    @{
-                                                        var onBreakAction = EventCallback.Factory.Create(this, () => HandleStatusChange(agent.Id, "OnBreak"));
-                                                        var availableAction = EventCallback.Factory.Create(this, () => HandleStatusChange(agent.Id, "Available"));
-                                                    }
-                                                    @if (agent.Status == "Available")
-                                                    {
-                                                        <button class="btn btn-sm btn-outline-warning" @onclick="onBreakAction" title="Set On Break">
-                                                            <i class="fas fa-pause"></i>
-                                                        </button>
-                                                    }
-                                                    else if (agent.Status == "OnBreak")
-                                                    {
-                                                        <button class="btn btn-sm btn-outline-success" @onclick="availableAction" title="Set Available">
-                                                            <i class="fas fa-play"></i>
-                                                        </button>
-                                                    }
-                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAgent(agent.Id)" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                <DataTable TItem="AgentSummaryDto" Items="agents" Title="Agents" 
+                          EmptyTitle="No Agents Found" EmptyMessage="You haven't added any agents yet."
+                          EmptyAction="@EmptyAction" Columns="@AgentColumns" />
             }
         </div>
     </div>
 </div>
 
-<style>
-    .status-indicator {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    
-    .status-available {
-        background-color: #28a745;
-    }
-    
-    .status-busy {
-        background-color: #ffc107;
-    }
-    
-    .status-onbreak {
-        background-color: #17a2b8;
-    }
-    
-    .status-offline {
-        background-color: #6c757d;
-    }
-</style>
-
 @code {
     private List<AgentSummaryDto> agents = new();
     private string? errorMessage;
     private string? successMessage;
+
+    // Empty action for the DataTable
+    private RenderFragment EmptyAction => @<a href="/agents/create" class="btn btn-primary">Add Your First Agent</a>;
+
+    // Column definitions for the DataTable
+    private List<DataTable<AgentSummaryDto>.TableColumn<AgentSummaryDto>> AgentColumns => new()
+    {
+        new() { 
+            Title = "Name", 
+            Template = agent => @<div class="d-flex align-items-center">
+                <StatusBadge Status="@agent.Status" ShowIndicator="true" />
+                <div>
+                    <strong>@agent.FirstName @agent.LastName</strong>
+                    @if (!string.IsNullOrEmpty(agent.Role))
+                    {
+                        <br /><small class="text-muted">@agent.Role</small>
+                    }
+                </div>
+            </div>
+        },
+        new() {
+            Title = "Email",
+            Template = agent => @<text>
+                @if (!string.IsNullOrEmpty(agent.Email))
+                {
+                    <a href="mailto:@agent.Email">@agent.Email</a>
+                }
+            </text>
+        },
+        new() {
+            Title = "Phone",
+            Template = agent => @<text>@(agent.PhoneNumber ?? "N/A")</text>
+        },
+        new() {
+            Title = "Status",
+            Template = agent => @<StatusBadge Status="@agent.Status" />
+        },
+        new() {
+            Title = "Current Call",
+            Template = agent => @<span class="text-muted">None</span>
+        },
+        new() {
+            Title = "Total Calls",
+            PropertyName = "TotalCalls"
+        },
+        new() {
+            Title = "Last Login",
+            Template = agent => @<text>
+                @if (agent.LastLoggedOutAt.HasValue)
+                {
+                    @agent.LastLoggedOutAt.Value.ToString("MM/dd/yyyy HH:mm")
+                }
+                else
+                {
+                    <span class="text-muted">Never</span>
+                }
+            </text>
+        },
+        new() {
+            Title = "Actions",
+            Template = agent => @<ActionButtonGroup 
+                ShowView="true" OnView="@(() => Navigation.NavigateTo($"/agents/{agent.Id}"))"
+                ShowEdit="true" OnEdit="@(() => Navigation.NavigateTo($"/agents/{agent.Id}/edit"))"
+                ShowDelete="true" OnDelete="@(() => DeleteAgent(agent.Id))"
+                ShowCustomActions="true" CustomActions="@GetCustomActions(agent)" />
+        }
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,6 +211,33 @@
         {
             errorMessage = $"Failed to load agents: {ex.Message}";
         }
+    }
+
+    private List<ActionButtonGroup.CustomAction> GetCustomActions(AgentSummaryDto agent)
+    {
+        var actions = new List<ActionButtonGroup.CustomAction>();
+
+        // Add status-specific actions
+        if (agent.Status == "Available")
+        {
+            actions.Add(new() {
+                Title = "Set On Break",
+                Icon = "fas fa-pause",
+                OnClick = EventCallback.Factory.Create(this, () => HandleStatusChange(agent.Id, "OnBreak")),
+                CssClass = "btn-outline-warning"
+            });
+        }
+        else if (agent.Status == "OnBreak")
+        {
+            actions.Add(new() {
+                Title = "Set Available",
+                Icon = "fas fa-play",
+                OnClick = EventCallback.Factory.Create(this, () => HandleStatusChange(agent.Id, "Available")),
+                CssClass = "btn-outline-success"
+            });
+        }
+
+        return actions;
     }
 
     private async Task SetAgentStatus(int agentId, string status)
@@ -281,29 +290,5 @@
                 errorMessage = $"Failed to delete agent: {ex.Message}";
             }
         }
-    }
-
-    private string GetStatusBadgeClass(string status)
-    {
-        return status switch
-        {
-            "Available" => "bg-success",
-            "Busy" => "bg-warning",
-            "OnBreak" => "bg-info",
-            "Offline" => "bg-secondary",
-            _ => "bg-secondary"
-        };
-    }
-
-    private string GetStatusIndicatorClass(string status)
-    {
-        return status switch
-        {
-            "Available" => "status-available",
-            "Busy" => "status-busy",
-            "OnBreak" => "status-onbreak",
-            "Offline" => "status-offline",
-            _ => "status-offline"
-        };
     }
 }

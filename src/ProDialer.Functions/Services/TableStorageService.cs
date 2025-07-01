@@ -17,6 +17,9 @@ public class TableStorageService
     private const string AgentSessionsTable = "AgentSessions";
     private const string CampaignStatusTable = "CampaignStatus";
     private const string CallQueueTable = "CallQueue";
+    private const string PreviewSessionsTable = "PreviewSessions";
+    private const string CallSessionsTable = "CallSessions";
+    private const string ManualDialQueueTable = "ManualDialQueue";
 
     public TableStorageService(TableServiceClient tableServiceClient, ILogger<TableStorageService> logger)
     {
@@ -31,7 +34,7 @@ public class TableStorageService
     {
         try
         {
-            var tableNames = new[] { AgentSessionsTable, CampaignStatusTable, CallQueueTable };
+            var tableNames = new[] { AgentSessionsTable, CampaignStatusTable, CallQueueTable, PreviewSessionsTable, CallSessionsTable, ManualDialQueueTable };
             
             foreach (var tableName in tableNames)
             {
@@ -383,4 +386,200 @@ public class TableStorageService
 
     #endregion
 
+    #region Preview Sessions
+
+    /// <summary>
+    /// Stores a preview session for agent review
+    /// </summary>
+    public async Task<bool> StorePreviewSessionAsync(int campaignId, int leadId, int agentId)
+    {
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(PreviewSessionsTable);
+            
+            var entity = new TableEntity
+            {
+                PartitionKey = $"Campaign_{campaignId}",
+                RowKey = $"Lead_{leadId}_Agent_{agentId}_{DateTime.UtcNow.Ticks}",
+                ["CampaignId"] = campaignId,
+                ["LeadId"] = leadId,
+                ["AgentId"] = agentId,
+                ["CreatedAt"] = DateTime.UtcNow,
+                ["Status"] = "PENDING"
+            };
+
+            await tableClient.UpsertEntityAsync(entity);
+            
+            _logger.LogDebug("Preview session stored for campaign {CampaignId}, lead {LeadId}, agent {AgentId}", 
+                campaignId, leadId, agentId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store preview session");
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region Call Sessions
+
+    /// <summary>
+    /// Stores an active call session
+    /// </summary>
+    public async Task<bool> StoreCallSessionAsync(int campaignId, int leadId, string callConnectionId)
+    {
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(CallSessionsTable);
+            
+            var entity = new TableEntity
+            {
+                PartitionKey = $"Campaign_{campaignId}",
+                RowKey = callConnectionId,
+                ["CampaignId"] = campaignId,
+                ["LeadId"] = leadId,
+                ["CallConnectionId"] = callConnectionId,
+                ["StartedAt"] = DateTime.UtcNow,
+                ["Status"] = "ACTIVE"
+            };
+
+            await tableClient.UpsertEntityAsync(entity);
+            
+            _logger.LogDebug("Call session stored for campaign {CampaignId}, lead {LeadId}, connection {CallConnectionId}", 
+                campaignId, leadId, callConnectionId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store call session");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Updates call session status
+    /// </summary>
+    public async Task<bool> UpdateCallSessionAsync(string callConnectionId, string status, int? agentId = null)
+    {
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(CallSessionsTable);
+            
+            // Find the entity by call connection ID across all partitions
+            await foreach (var entity in tableClient.QueryAsync<TableEntity>(filter: $"CallConnectionId eq '{callConnectionId}'"))
+            {
+                entity["Status"] = status;
+                entity["UpdatedAt"] = DateTime.UtcNow;
+                
+                if (agentId.HasValue)
+                {
+                    entity["AgentId"] = agentId.Value;
+                }
+
+                await tableClient.UpdateEntityAsync(entity, entity.ETag);
+                return true;
+            }
+
+            _logger.LogWarning("Call session not found for connection ID {CallConnectionId}", callConnectionId);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update call session");
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region Manual Dial Queue
+
+    /// <summary>
+    /// Adds a lead to an agent's manual dial queue
+    /// </summary>
+    public async Task<bool> AddToManualQueueAsync(int agentId, int leadId)
+    {
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(ManualDialQueueTable);
+            
+            var entity = new TableEntity
+            {
+                PartitionKey = $"Agent_{agentId}",
+                RowKey = $"Lead_{leadId}_{DateTime.UtcNow.Ticks}",
+                ["AgentId"] = agentId,
+                ["LeadId"] = leadId,
+                ["QueuedAt"] = DateTime.UtcNow,
+                ["Status"] = "QUEUED"
+            };
+
+            await tableClient.UpsertEntityAsync(entity);
+            
+            _logger.LogDebug("Lead {LeadId} added to manual dial queue for agent {AgentId}", leadId, agentId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to add lead to manual dial queue");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets manual dial queue for an agent
+    /// </summary>
+    public async Task<List<int>> GetManualDialQueueAsync(int agentId)
+    {
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(ManualDialQueueTable);
+            var leadIds = new List<int>();
+
+            await foreach (var entity in tableClient.QueryAsync<TableEntity>(
+                filter: $"PartitionKey eq 'Agent_{agentId}' and Status eq 'QUEUED'"))
+            {
+                if (entity.GetInt32("LeadId") is int leadId)
+                {
+                    leadIds.Add(leadId);
+                }
+            }
+
+            return leadIds.OrderBy(x => x).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get manual dial queue for agent {AgentId}", agentId);
+            return new List<int>();
+        }
+    }
+
+    /// <summary>
+    /// Removes a lead from manual dial queue
+    /// </summary>
+    public async Task<bool> RemoveFromManualQueueAsync(int agentId, int leadId)
+    {
+        try
+        {
+            var tableClient = _tableServiceClient.GetTableClient(ManualDialQueueTable);
+
+            await foreach (var entity in tableClient.QueryAsync<TableEntity>(
+                filter: $"PartitionKey eq 'Agent_{agentId}' and LeadId eq {leadId}"))
+            {
+                await tableClient.DeleteEntityAsync(entity.PartitionKey, entity.RowKey);
+                _logger.LogDebug("Lead {LeadId} removed from manual dial queue for agent {AgentId}", leadId, agentId);
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to remove lead from manual dial queue");
+            return false;
+        }
+    }
+
+    #endregion
 }

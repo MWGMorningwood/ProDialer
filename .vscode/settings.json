@@ -1,3 +1,27 @@
 {
-    "azureFunctions.projectSubpath": "src\\ProDialer.Functions"
+    "azureFunctions.projectSubpath": "src\\ProDialer.Functions",
+    "mcp": {
+        "servers": {
+            "Azure MCP Server": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@azure/mcp@latest",
+                    "server",
+                    "start"
+                ]
+            },
+            "memory": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-memory"
+                ]
+            },
+            "context7": {
+                "type": "http",
+                "url": "https://mcp.context7.com/mcp"
+            }
+        }
+    }
 }

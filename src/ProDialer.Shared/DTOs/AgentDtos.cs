@@ -2,44 +2,66 @@ namespace ProDialer.Shared.DTOs;
 
 public class CreateAgentDto
 {
+    public string UserId { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string? Phone { get; set; }
-    public string? Department { get; set; }
-    public string? Team { get; set; }
-    public string? Supervisor { get; set; }
-    public DateTime? HireDate { get; set; }
-    public string? Skills { get; set; }
+    public string? PhoneNumber { get; set; }
+    public int MaxConcurrentCalls { get; set; } = 1;
+    public int SkillLevel { get; set; } = 5;
+    public string? QualifiedCampaigns { get; set; }
     public string? Languages { get; set; }
-    public bool CanHandleInbound { get; set; } = true;
-    public bool CanHandleOutbound { get; set; } = true;
-    public decimal? HourlyRate { get; set; }
-    public string? Notes { get; set; }
+    public string TimeZone { get; set; } = "UTC";
+    public string? Role { get; set; }
+    public string? Supervisor { get; set; }
+    public string? Extension { get; set; }
+    public string? CommunicationEndpoint { get; set; }
+    public string? Tags { get; set; }
+    public string? CustomFields { get; set; }
 }
 
 public class UpdateAgentDto : CreateAgentDto
 {
     public int Id { get; set; }
+    public string Status { get; set; } = "LoggedOut";
+    public bool IsLoggedIn { get; set; } = false;
+    public bool IsOnCall { get; set; } = false;
+    public int ActiveCalls { get; set; } = 0;
+    public DateTime? CurrentSessionStartedAt { get; set; }
+    public DateTime? LastLoggedOutAt { get; set; }
+    public int TodayLoggedInMinutes { get; set; } = 0;
+    public int TodayCallsHandled { get; set; } = 0;
+    public int TodayTalkTimeMinutes { get; set; } = 0;
     public bool IsActive { get; set; } = true;
-    public string Status { get; set; } = "Available";
-    public DateTime? LastLoginAt { get; set; }
-    public DateTime? LastLogoutAt { get; set; }
 }
 
 public class AgentSummaryDto
 {
     public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string? Phone { get; set; }
-    public string? Department { get; set; }
-    public string? Team { get; set; }
-    public bool IsActive { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public DateTime? LastLoginAt { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string Status { get; set; } = "LoggedOut";
+    public bool IsLoggedIn { get; set; } = false;
+    public bool IsOnCall { get; set; } = false;
+    public int ActiveCalls { get; set; } = 0;
+    public int MaxConcurrentCalls { get; set; } = 1;
+    public int SkillLevel { get; set; } = 5;
+    public string? QualifiedCampaigns { get; set; }
+    public string? Languages { get; set; }
+    public string TimeZone { get; set; } = "UTC";
+    public string? Role { get; set; }
+    public string? Supervisor { get; set; }
+    public bool IsActive { get; set; } = true;
+    public string? Extension { get; set; }
+    public DateTime? CurrentSessionStartedAt { get; set; }
+    public DateTime? LastLoggedOutAt { get; set; }
+    public int TodayLoggedInMinutes { get; set; } = 0;
+    public int TodayCallsHandled { get; set; } = 0;
+    public int TodayTalkTimeMinutes { get; set; } = 0;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     
@@ -52,15 +74,10 @@ public class AgentSummaryDto
 
 public class AgentDetailDto : AgentSummaryDto
 {
-    public string? Supervisor { get; set; }
-    public DateTime? HireDate { get; set; }
-    public string? Skills { get; set; }
-    public string? Languages { get; set; }
-    public bool CanHandleInbound { get; set; }
-    public bool CanHandleOutbound { get; set; }
-    public decimal? HourlyRate { get; set; }
-    public string? Notes { get; set; }
-    public DateTime? LastLogoutAt { get; set; }
+    // Additional agent fields not in summary
+    public string? CommunicationEndpoint { get; set; }
+    public string? Tags { get; set; }
+    public string? CustomFields { get; set; }
     
     // Extended performance metrics
     public int TotalCallsToday { get; set; }

@@ -52,29 +52,86 @@
                 </div>
             }
 
-            <!-- Filters -->
+            <!-- Enhanced Filters -->
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3">
-                            <input type="text" class="form-control" placeholder="Search leads..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
+                            <label class="form-label small">Search Leads</label>
+                            <input type="text" class="form-control" placeholder="Name, phone, email..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label small">Status</label>
                             <select class="form-control" @bind="statusFilter">
                                 <option value="">All Statuses</option>
-                                <option value="New">New</option>
-                                <option value="Called">Called</option>
-                                <option value="Contacted">Contacted</option>
-                                <option value="NotInterested">Not Interested</option>
-                                <option value="Callback">Callback</option>
-                                <option value="DoNotCall">Do Not Call</option>
+                                <option value="NEW">New</option>
+                                <option value="CALLED">Called</option>
+                                <option value="CONTACTED">Contacted</option>
+                                <option value="CALLBACK">Callback</option>
+                                <option value="DNC">Do Not Call</option>
+                                <option value="DISCONNECTED">Disconnected</option>
+                                <option value="BUSY">Busy</option>
+                                <option value="ANSWERING_MACHINE">Answering Machine</option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-secondary" @onclick="ApplyFilters">Apply Filters</button>
+                            <label class="form-label small">Lifecycle Stage</label>
+                            <select class="form-control" @bind="lifecycleFilter">
+                                <option value="">All Stages</option>
+                                <option value="NEW">New</option>
+                                <option value="QUALIFIED">Qualified</option>
+                                <option value="CONTACTED">Contacted</option>
+                                <option value="CONVERTED">Converted</option>
+                                <option value="RECYCLED">Recycled</option>
+                            </select>
                         </div>
-                        <div class="col-md-5 text-end">
-                            <span class="text-muted">@totalLeads leads total</span>
+                        <div class="col-md-2">
+                            <label class="form-label small">Quality Score</label>
+                            <select class="form-control" @bind="qualityFilter">
+                                <option value="">All Scores</option>
+                                <option value="80-100">High (80-100)</option>
+                                <option value="60-79">Medium (60-79)</option>
+                                <option value="40-59">Fair (40-59)</option>
+                                <option value="0-39">Low (0-39)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Actions</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-secondary btn-sm" @onclick="ApplyFilters">Apply</button>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="ClearFilters">Clear</button>
+                                <div class="text-muted small align-self-center ms-2">
+                                    @totalLeads leads total
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" @bind="hideExcluded" />
+                                <label class="form-check-label small">
+                                    Hide Excluded/Opted Out
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" @bind="scheduledCallbacksOnly" />
+                                <label class="form-check-label small">
+                                    Scheduled Callbacks Only
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                Showing @leads.Count of @totalLeads leads
+                                @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(statusFilter) || !string.IsNullOrEmpty(lifecycleFilter))
+                                {
+                                    <span class="text-info">(filtered)</span>
+                                }
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -128,21 +185,30 @@
                                         <th>Phone</th>
                                         <th>Email</th>
                                         <th>Status</th>
-                                        <th>Call Attempts</th>
+                                        <th>Lifecycle</th>
+                                        <th>Priority</th>
+                                        <th>Quality Score</th>
+                                        <th>Call Count</th>
                                         <th>Last Called</th>
-                                        <th>Created</th>
+                                        <th>Next Callback</th>
+                                        <th>Owner</th>
+                                        <th>Flags</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var lead in leads)
                                     {
-                                        <tr>
+                                        <tr class="@GetRowClass(lead)">
                                             <td>
                                                 <strong>@lead.FirstName @lead.LastName</strong>
                                                 @if (!string.IsNullOrEmpty(lead.Company))
                                                 {
                                                     <br /><small class="text-muted">@lead.Company</small>
+                                                }
+                                                @if (!string.IsNullOrEmpty(lead.FullName) && lead.FullName != $"{lead.FirstName} {lead.LastName}")
+                                                {
+                                                    <br /><small class="text-info">@lead.FullName</small>
                                                 }
                                             </td>
                                             <td>
@@ -159,8 +225,37 @@
                                             </td>
                                             <td>
                                                 <span class="badge @GetStatusBadgeClass(lead.Status)">@lead.Status</span>
+                                                @if (!string.IsNullOrEmpty(lead.Disposition))
+                                                {
+                                                    <br /><small class="text-muted">@lead.Disposition</small>
+                                                }
                                             </td>
-                                            <td>@lead.CallCount</td>
+                                            <td>
+                                                <span class="badge @GetLifecycleBadgeClass(lead.LifecycleStage)">@lead.LifecycleStage</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetPriorityBadgeClass(lead.Priority)">@lead.Priority</span>
+                                                @if (lead.Rank > 0)
+                                                {
+                                                    <br /><small class="text-muted">Rank: @lead.Rank</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress me-2" style="width: 60px; height: 8px;">
+                                                        <div class="progress-bar @GetQualityScoreClass(lead.QualityScore)" 
+                                                             style="width: @(lead.QualityScore)%"></div>
+                                                    </div>
+                                                    <small>@lead.QualityScore</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @lead.CallCount
+                                                @if (lead.CalledCount > 0)
+                                                {
+                                                    <br /><small class="text-muted">(@lead.CalledCount total)</small>
+                                                }
+                                            </td>
                                             <td>
                                                 @if (lead.LastCallAttempt.HasValue)
                                                 {
@@ -171,7 +266,45 @@
                                                     <span class="text-muted">Never</span>
                                                 }
                                             </td>
-                                            <td>@lead.CreatedAt.ToString("MM/dd/yyyy")</td>
+                                            <td>
+                                                @if (lead.ScheduledCallbackAt.HasValue)
+                                                {
+                                                    var callbackClass = lead.ScheduledCallbackAt.Value < DateTime.Now ? "text-danger" : "text-success";
+                                                    <span class="@callbackClass">@lead.ScheduledCallbackAt.Value.ToString("MM/dd/yyyy HH:mm")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(lead.Owner))
+                                                {
+                                                    <span>@lead.Owner</span>
+                                                }
+                                                else if (!string.IsNullOrEmpty(lead.User))
+                                                {
+                                                    <span class="text-muted">@lead.User</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Unassigned</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (lead.IsExcluded)
+                                                {
+                                                    <i class="fas fa-ban text-danger" title="Excluded"></i>
+                                                }
+                                                @if (lead.HasOptedOut)
+                                                {
+                                                    <i class="fas fa-user-slash text-warning ms-1" title="Opted Out"></i>
+                                                }
+                                                @if (lead.ScheduledCallbackAt.HasValue && lead.ScheduledCallbackAt.Value > DateTime.Now)
+                                                {
+                                                    <i class="fas fa-clock text-success ms-1" title="Scheduled Callback"></i>
+                                                }
+                                            </td>
                                             <td>
                                                 <div class="btn-group" role="group">
                                                     <a href="/leads/@lead.Id" class="btn btn-sm btn-outline-primary" title="View">
@@ -180,9 +313,12 @@
                                                     <a href="/leads/@lead.Id/edit" class="btn btn-sm btn-outline-secondary" title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <button class="btn btn-sm btn-outline-success" @onclick="() => CallLead(lead.Id)" title="Call">
-                                                        <i class="fas fa-phone"></i>
-                                                    </button>
+                                                    @if (!lead.IsExcluded && !lead.HasOptedOut)
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-success" @onclick="() => CallLead(lead.Id)" title="Call">
+                                                            <i class="fas fa-phone"></i>
+                                                        </button>
+                                                    }
                                                     <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteLead(lead.Id)" title="Delete">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -221,6 +357,10 @@
     private string? successMessage;
     private string searchTerm = string.Empty;
     private string statusFilter = string.Empty;
+    private string lifecycleFilter = string.Empty;
+    private string qualityFilter = string.Empty;
+    private bool hideExcluded = false;
+    private bool scheduledCallbacksOnly = false;
     private int totalLeads = 0;
     private int currentPage = 1;
     private readonly int pageSize = 50;
@@ -253,6 +393,18 @@
                 
             if (!string.IsNullOrEmpty(statusFilter))
                 url += $"&status={statusFilter}";
+                
+            if (!string.IsNullOrEmpty(lifecycleFilter))
+                url += $"&lifecycle={lifecycleFilter}";
+                
+            if (!string.IsNullOrEmpty(qualityFilter))
+                url += $"&quality={qualityFilter}";
+                
+            if (hideExcluded)
+                url += $"&hideExcluded=true";
+                
+            if (scheduledCallbacksOnly)
+                url += $"&scheduledCallbacksOnly=true";
 
             var response = await Http.GetFromJsonAsync<LeadListResponseDto>(url);
             if (response != null)
@@ -293,6 +445,17 @@
         currentPage = 1;
         leads.Clear();
         await LoadLeads();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = string.Empty;
+        statusFilter = string.Empty;
+        lifecycleFilter = string.Empty;
+        qualityFilter = string.Empty;
+        hideExcluded = false;
+        scheduledCallbacksOnly = false;
+        await ApplyFilters();
     }
 
     private async Task OnSearchKeyUp(KeyboardEventArgs e)
@@ -349,17 +512,62 @@
         errorMessage = "Import functionality will be implemented in a future update.";
     }
 
+    private string GetRowClass(LeadSummaryDto lead)
+    {
+        if (lead.IsExcluded) return "table-danger";
+        if (lead.HasOptedOut) return "table-warning";
+        if (lead.ScheduledCallbackAt.HasValue && lead.ScheduledCallbackAt.Value < DateTime.Now) return "table-info";
+        return "";
+    }
+
     private string GetStatusBadgeClass(string status)
     {
         return status switch
         {
-            "New" => "bg-primary",
-            "Called" => "bg-info",
-            "Contacted" => "bg-success",
-            "NotInterested" => "bg-secondary",
-            "Callback" => "bg-warning",
-            "DoNotCall" => "bg-danger",
+            "NEW" => "bg-primary",
+            "CALLED" => "bg-info",
+            "CONTACTED" => "bg-success",
+            "CALLBACK" => "bg-warning text-dark",
+            "DNC" => "bg-danger",
+            "DISCONNECTED" => "bg-secondary",
+            "BUSY" => "bg-warning text-dark",
+            "ANSWERING_MACHINE" => "bg-info",
             _ => "bg-secondary"
+        };
+    }
+
+    private string GetLifecycleBadgeClass(string stage)
+    {
+        return stage switch
+        {
+            "NEW" => "bg-light text-dark",
+            "QUALIFIED" => "bg-primary",
+            "CONTACTED" => "bg-success",
+            "CONVERTED" => "bg-success",
+            "RECYCLED" => "bg-warning text-dark",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    private string GetPriorityBadgeClass(int priority)
+    {
+        return priority switch
+        {
+            >= 8 => "bg-danger",
+            >= 6 => "bg-warning text-dark",
+            >= 4 => "bg-primary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetQualityScoreClass(int score)
+    {
+        return score switch
+        {
+            >= 80 => "bg-success",
+            >= 60 => "bg-primary",
+            >= 40 => "bg-warning",
+            _ => "bg-danger"
         };
     }
 }

@@ -32,6 +32,36 @@ public class Lead
     [StringLength(20)]
     public string PrimaryPhone { get; set; } = string.Empty;
     
+    /// <summary>
+    /// Phone country code (1 for US/Canada, 44 for UK, etc.)
+    /// </summary>
+    [StringLength(4)]
+    public string PhoneCode { get; set; } = "1";
+    
+    /// <summary>
+    /// Raw phone number storage (digits only, no formatting)
+    /// </summary>
+    [StringLength(20)]
+    public string? PhoneNumberRaw { get; set; }
+    
+    /// <summary>
+    /// Phone number validation status: VALID, INVALID, UNVALIDATED
+    /// </summary>
+    [StringLength(20)]
+    public string PhoneValidationStatus { get; set; } = "UNVALIDATED";
+    
+    /// <summary>
+    /// Phone number carrier information (if available)
+    /// </summary>
+    [StringLength(100)]
+    public string? PhoneCarrier { get; set; }
+    
+    /// <summary>
+    /// Phone number type: MOBILE, LANDLINE, VOIP, etc.
+    /// </summary>
+    [StringLength(20)]
+    public string? PhoneType { get; set; }
+    
     [StringLength(20)]
     public string? SecondaryPhone { get; set; }
     
@@ -43,6 +73,114 @@ public class Lead
     
     [StringLength(20)]
     public string? HomePhone { get; set; }
+    
+    /// <summary>
+    /// Additional phone numbers (formatted as: phone_type:number,phone_type:number)
+    /// </summary>
+    [StringLength(1000)]
+    public string? AlternatePhones { get; set; }
+    
+    /// <summary>
+    /// External vendor lead code for integration
+    /// </summary>
+    [StringLength(20)]
+    public string? VendorLeadCode { get; set; }
+    
+    /// <summary>
+    /// Source ID for tracking lead origin
+    /// </summary>
+    [StringLength(50)]
+    public string? SourceId { get; set; }
+    
+    /// <summary>
+    /// Middle initial
+    /// </summary>
+    [StringLength(1)]
+    public string? MiddleInitial { get; set; }
+    
+    /// <summary>
+    /// Address line 3 for international addresses
+    /// </summary>
+    [StringLength(200)]
+    public string? AddressLine3 { get; set; }
+    
+    /// <summary>
+    /// Province for international addresses
+    /// </summary>
+    [StringLength(100)]
+    public string? Province { get; set; }
+    
+    /// <summary>
+    /// Security phrase for verification
+    /// </summary>
+    [StringLength(100)]
+    public string? SecurityPhrase { get; set; }
+    
+    /// <summary>
+    /// Rank for priority ordering (higher = more important)
+    /// </summary>
+    [Range(0, 99999)]
+    public int Rank { get; set; } = 0;
+    
+    /// <summary>
+    /// Lead called count (number of times attempted)
+    /// </summary>
+    public int CalledCount { get; set; } = 0;
+    
+    /// <summary>
+    /// Lead quality score (calculated or assigned)
+    /// </summary>
+    [Range(0, 100)]
+    public int QualityScore { get; set; } = 50;
+    
+    /// <summary>
+    /// Lead lifecycle stage: NEW, CONTACTED, QUALIFIED, CONVERTED, DEAD
+    /// </summary>
+    [StringLength(20)]
+    public string LifecycleStage { get; set; } = "NEW";
+    
+    /// <summary>
+    /// Lead recycling count (how many times recycled)
+    /// </summary>
+    public int RecycleCount { get; set; } = 0;
+    
+    /// <summary>
+    /// Last recycle date/time
+    /// </summary>
+    public DateTime? LastRecycledAt { get; set; }
+    
+    /// <summary>
+    /// Compliance flags (JSON): {"dnc_checked": true, "timezone_valid": true}
+    /// </summary>
+    public string? ComplianceFlags { get; set; }
+    
+    /// <summary>
+    /// Callback appointment details (JSON): {"date": "2025-01-15T10:00:00Z", "agent": "agent1", "notes": "..."}
+    /// </summary>
+    public string? CallbackAppointment { get; set; }
+    
+    /// <summary>
+    /// Owner/territory assignment
+    /// </summary>
+    [StringLength(20)]
+    public string? Owner { get; set; }
+    
+    /// <summary>
+    /// Entry list ID for custom fields tracking
+    /// </summary>
+    public int? EntryListId { get; set; }
+    
+    /// <summary>
+    /// GMT offset for this lead's timezone
+    /// </summary>
+    [Range(-12, 14)]
+    public decimal GmtOffset { get; set; } = 0;
+    
+    /// <summary>
+    /// Current GMT offset accounting for DST
+    /// </summary>
+    [Range(-12, 14)]
+    public decimal GmtOffsetNow { get; set; } = 0;
     
     // Email addresses
     [StringLength(200)]
@@ -80,10 +218,16 @@ public class Lead
     
     // Call management fields
     /// <summary>
-    /// Current status: New, InProgress, Contacted, NotInterested, DoNotCall, Callback, etc.
+    /// Current status: NEW, CALLED, BUSY, NA, A, DROP, etc. (VICIdial style codes)
     /// </summary>
-    [StringLength(50)]
-    public string Status { get; set; } = "New";
+    [StringLength(6)]
+    public string Status { get; set; } = "NEW";
+    
+    /// <summary>
+    /// User/agent who last handled this lead
+    /// </summary>
+    [StringLength(20)]
+    public string? User { get; set; }
     
     /// <summary>
     /// Priority for calling this lead (higher number = higher priority)
@@ -95,6 +239,16 @@ public class Lead
     /// Number of times this lead has been called
     /// </summary>
     public int CallAttempts { get; set; } = 0;
+    
+    /// <summary>
+    /// Local call time for last call attempt
+    /// </summary>
+    public DateTime? LastLocalCallTime { get; set; }
+    
+    /// <summary>
+    /// Called since last reset flag
+    /// </summary>
+    public bool CalledSinceLastReset { get; set; } = false;
     
     /// <summary>
     /// Date/time of the last call attempt
@@ -218,8 +372,33 @@ public class Lead
     /// </summary>
     public DateTime? OptedOutAt { get; set; }
     
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>
+    /// Last modification timestamp (for change tracking)
+    /// </summary>
+    public DateTime ModifyDate { get; set; }
+    
+    /// <summary>
+    /// Lead conversion tracking: converted value, date, etc. (JSON format)
+    /// </summary>
+    public string? ConversionTracking { get; set; }
+    
+    /// <summary>
+    /// Agent comments and interaction history (JSON array format)
+    /// </summary>
+    public string? InteractionHistory { get; set; }
+    
+    /// <summary>
+    /// Lead scoring factors (JSON): {"demographic_score": 25, "behavioral_score": 30}
+    /// </summary>
+    public string? ScoringFactors { get; set; }
+    
+    /// <summary>
+    /// Marketing attribution data (JSON): {"campaign": "email_2024_q4", "source": "google_ads"}
+    /// </summary>
+    public string? AttributionData { get; set; }
+    
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     
     [StringLength(100)]
     public string CreatedBy { get; set; } = string.Empty;

@@ -12,7 +12,7 @@ namespace ProDialer.Functions.Functions;
 
 /// <summary>
 /// Azure Functions for managing campaigns
-/// Provides CRUD operations and campaign-specific functionality
+/// Provides CRUD operations and campaign-specific functionality with comprehensive VICIdial feature support
 /// </summary>
 public class CampaignFunctions
 {
@@ -41,13 +41,21 @@ public class CampaignFunctions
                     Id = c.Id,
                     Name = c.Name,
                     Description = c.Description,
+                    DialMethod = c.DialMethod,
                     IsActive = c.IsActive,
                     DialingRatio = c.DialingRatio,
+                    Priority = c.Priority,
                     CreatedAt = c.CreatedAt,
                     UpdatedAt = c.UpdatedAt,
+                    TotalDialedToday = c.TotalDialedToday,
+                    TotalContactsToday = c.TotalContactsToday,
+                    CurrentDropRate = c.CurrentDropRate,
+                    StatsLastUpdated = c.StatsLastUpdated,
                     TotalLeads = 0, // Will be calculated separately for performance
                     CalledLeads = 0,
-                    ContactedLeads = 0
+                    ContactedLeads = 0,
+                    TotalLists = 0, // Will be calculated separately for performance
+                    ActiveLists = 0
                 })
                 .ToListAsync();
 
@@ -86,9 +94,28 @@ public class CampaignFunctions
                 Id = campaign.Id,
                 Name = campaign.Name,
                 Description = campaign.Description,
+                DialMethod = campaign.DialMethod,
                 DialingRatio = campaign.DialingRatio,
                 ApplyRatioToIdleAgentsOnly = campaign.ApplyRatioToIdleAgentsOnly,
+                AdaptiveMaxLevel = campaign.AdaptiveMaxLevel,
+                DialTimeout = campaign.DialTimeout,
                 MaxConcurrentCalls = campaign.MaxConcurrentCalls,
+                DialPrefix = campaign.DialPrefix,
+                ManualDialPrefix = campaign.ManualDialPrefix,
+                ThreeWayDialPrefix = campaign.ThreeWayDialPrefix,
+                ParkExtension = campaign.ParkExtension,
+                ParkFileName = campaign.ParkFileName,
+                VoicemailExtension = campaign.VoicemailExtension,
+                AnsweringMachineExtension = campaign.AnsweringMachineExtension,
+                AvailableOnlyRatioTally = campaign.AvailableOnlyRatioTally,
+                AvailableOnlyTallyThreshold = campaign.AvailableOnlyTallyThreshold,
+                NextAgentCall = campaign.NextAgentCall,
+                AlternateNumberDialing = campaign.AlternateNumberDialing,
+                ScheduledCallbacks = campaign.ScheduledCallbacks,
+                AllowInbound = campaign.AllowInbound,
+                ForceResetHopper = campaign.ForceResetHopper,
+                HopperDuplicateCheck = campaign.HopperDuplicateCheck,
+                GetCallLaunch = campaign.GetCallLaunch,
                 TimeZone = campaign.TimeZone,
                 CallStartTime = campaign.CallStartTime,
                 CallEndTime = campaign.CallEndTime,
@@ -100,13 +127,48 @@ public class CampaignFunctions
                 EnableAnsweringMachineDetection = campaign.EnableAnsweringMachineDetection,
                 AnsweringMachineAction = campaign.AnsweringMachineAction,
                 AnsweringMachineMessage = campaign.AnsweringMachineMessage,
+                LeadOrder = campaign.LeadOrder,
+                RandomizeLeadOrder = campaign.RandomizeLeadOrder,
+                LeadOrderSecondary = campaign.LeadOrderSecondary,
+                HopperLevel = campaign.HopperLevel,
+                OutboundCallerId = campaign.OutboundCallerId,
+                TransferConf1 = campaign.TransferConf1,
+                TransferConf2 = campaign.TransferConf2,
+                TransferConf3 = campaign.TransferConf3,
+                TransferConf4 = campaign.TransferConf4,
+                TransferConf5 = campaign.TransferConf5,
+                XferConfADtmf = campaign.XferConfADtmf,
+                XferConfANumber = campaign.XferConfANumber,
+                XferConfBDtmf = campaign.XferConfBDtmf,
+                XferConfBNumber = campaign.XferConfBNumber,
+                ContainerEntry = campaign.ContainerEntry,
+                ManualDialFilter = campaign.ManualDialFilter,
+                DispoCallUrl = campaign.DispoCallUrl,
+                WebForm1 = campaign.WebForm1,
+                WebForm2 = campaign.WebForm2,
+                WebForm3 = campaign.WebForm3,
+                WrapupSeconds = campaign.WrapupSeconds,
+                DialStatuses = campaign.DialStatuses,
+                LeadFilterId = campaign.LeadFilterId,
+                DropCallTimer = campaign.DropCallTimer,
+                SafeHarborMessage = campaign.SafeHarborMessage,
+                MaxDropPercentage = campaign.MaxDropPercentage,
                 IsActive = campaign.IsActive,
                 Priority = campaign.Priority,
                 LocationRestrictions = campaign.LocationRestrictions,
                 EnableCallRecording = campaign.EnableCallRecording,
                 CustomFields = campaign.CustomFields,
+                RecyclingRules = campaign.RecyclingRules,
+                EnableAutoRecycling = campaign.EnableAutoRecycling,
+                MaxRecycleCount = campaign.MaxRecycleCount,
+                StatsLastUpdated = campaign.StatsLastUpdated,
+                TotalDialedToday = campaign.TotalDialedToday,
+                TotalContactsToday = campaign.TotalContactsToday,
+                CurrentDropRate = campaign.CurrentDropRate,
                 CreatedAt = campaign.CreatedAt,
-                UpdatedAt = campaign.UpdatedAt
+                UpdatedAt = campaign.UpdatedAt,
+                CreatedBy = campaign.CreatedBy,
+                UpdatedBy = campaign.UpdatedBy
             };
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -141,27 +203,100 @@ public class CampaignFunctions
 
             var campaign = new Campaign
             {
+                // Core Campaign Properties
                 Name = createDto.Name,
                 Description = createDto.Description,
+                DialMethod = createDto.DialMethod,
                 DialingRatio = createDto.DialingRatio,
                 ApplyRatioToIdleAgentsOnly = createDto.ApplyRatioToIdleAgentsOnly,
+                AdaptiveMaxLevel = createDto.AdaptiveMaxLevel,
+                DialTimeout = createDto.DialTimeout,
                 MaxConcurrentCalls = createDto.MaxConcurrentCalls,
-                TimeZone = createDto.TimeZone ?? "UTC",
-                CallStartTime = createDto.CallStartTime ?? "08:00",
-                CallEndTime = createDto.CallEndTime ?? "20:00",
-                AllowedDaysOfWeek = createDto.AllowedDaysOfWeek ?? "Monday,Tuesday,Wednesday,Thursday,Friday",
+                
+                // Dial Prefixes and Extensions
+                DialPrefix = createDto.DialPrefix,
+                ManualDialPrefix = createDto.ManualDialPrefix,
+                ThreeWayDialPrefix = createDto.ThreeWayDialPrefix,
+                ParkExtension = createDto.ParkExtension,
+                ParkFileName = createDto.ParkFileName,
+                VoicemailExtension = createDto.VoicemailExtension,
+                AnsweringMachineExtension = createDto.AnsweringMachineExtension,
+                
+                // Agent Selection and Routing
+                AvailableOnlyRatioTally = createDto.AvailableOnlyRatioTally,
+                AvailableOnlyTallyThreshold = createDto.AvailableOnlyTallyThreshold,
+                NextAgentCall = createDto.NextAgentCall,
+                
+                // Call Handling and Features
+                AlternateNumberDialing = createDto.AlternateNumberDialing,
+                ScheduledCallbacks = createDto.ScheduledCallbacks,
+                AllowInbound = createDto.AllowInbound,
+                ForceResetHopper = createDto.ForceResetHopper,
+                HopperDuplicateCheck = createDto.HopperDuplicateCheck,
+                GetCallLaunch = createDto.GetCallLaunch,
+                
+                // Time Restrictions
+                TimeZone = createDto.TimeZone,
+                CallStartTime = createDto.CallStartTime,
+                CallEndTime = createDto.CallEndTime,
+                AllowedDaysOfWeek = createDto.AllowedDaysOfWeek,
                 RespectLeadTimeZone = createDto.RespectLeadTimeZone,
+                
+                // Call Attempt Configuration
                 MinCallInterval = createDto.MinCallInterval,
                 MaxCallAttempts = createDto.MaxCallAttempts,
                 CallAttemptDelay = createDto.CallAttemptDelay,
+                
+                // Answering Machine Detection
                 EnableAnsweringMachineDetection = createDto.EnableAnsweringMachineDetection,
-                AnsweringMachineAction = createDto.AnsweringMachineAction ?? "Hangup",
+                AnsweringMachineAction = createDto.AnsweringMachineAction,
                 AnsweringMachineMessage = createDto.AnsweringMachineMessage,
+                
+                // Lead Processing
+                LeadOrder = createDto.LeadOrder,
+                RandomizeLeadOrder = createDto.RandomizeLeadOrder,
+                LeadOrderSecondary = createDto.LeadOrderSecondary,
+                HopperLevel = createDto.HopperLevel,
+                
+                // Transfer Configuration
+                OutboundCallerId = createDto.OutboundCallerId,
+                TransferConf1 = createDto.TransferConf1,
+                TransferConf2 = createDto.TransferConf2,
+                TransferConf3 = createDto.TransferConf3,
+                TransferConf4 = createDto.TransferConf4,
+                TransferConf5 = createDto.TransferConf5,
+                XferConfADtmf = createDto.XferConfADtmf,
+                XferConfANumber = createDto.XferConfANumber,
+                XferConfBDtmf = createDto.XferConfBDtmf,
+                XferConfBNumber = createDto.XferConfBNumber,
+                
+                // Advanced Features
+                ContainerEntry = createDto.ContainerEntry,
+                ManualDialFilter = createDto.ManualDialFilter,
+                DispoCallUrl = createDto.DispoCallUrl,
+                WebForm1 = createDto.WebForm1,
+                WebForm2 = createDto.WebForm2,
+                WebForm3 = createDto.WebForm3,
+                WrapupSeconds = createDto.WrapupSeconds,
+                DialStatuses = createDto.DialStatuses,
+                LeadFilterId = createDto.LeadFilterId,
+                DropCallTimer = createDto.DropCallTimer,
+                SafeHarborMessage = createDto.SafeHarborMessage,
+                MaxDropPercentage = createDto.MaxDropPercentage,
+                
+                // Campaign Settings
                 IsActive = createDto.IsActive,
                 Priority = createDto.Priority,
                 LocationRestrictions = createDto.LocationRestrictions,
                 EnableCallRecording = createDto.EnableCallRecording,
                 CustomFields = createDto.CustomFields,
+                
+                // Lead Recycling
+                RecyclingRules = createDto.RecyclingRules,
+                EnableAutoRecycling = createDto.EnableAutoRecycling,
+                MaxRecycleCount = createDto.MaxRecycleCount,
+                
+                // Audit fields
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 CreatedBy = "System", // TODO: Get from authentication context
@@ -176,9 +311,28 @@ public class CampaignFunctions
                 Id = campaign.Id,
                 Name = campaign.Name,
                 Description = campaign.Description,
+                DialMethod = campaign.DialMethod,
                 DialingRatio = campaign.DialingRatio,
                 ApplyRatioToIdleAgentsOnly = campaign.ApplyRatioToIdleAgentsOnly,
+                AdaptiveMaxLevel = campaign.AdaptiveMaxLevel,
+                DialTimeout = campaign.DialTimeout,
                 MaxConcurrentCalls = campaign.MaxConcurrentCalls,
+                DialPrefix = campaign.DialPrefix,
+                ManualDialPrefix = campaign.ManualDialPrefix,
+                ThreeWayDialPrefix = campaign.ThreeWayDialPrefix,
+                ParkExtension = campaign.ParkExtension,
+                ParkFileName = campaign.ParkFileName,
+                VoicemailExtension = campaign.VoicemailExtension,
+                AnsweringMachineExtension = campaign.AnsweringMachineExtension,
+                AvailableOnlyRatioTally = campaign.AvailableOnlyRatioTally,
+                AvailableOnlyTallyThreshold = campaign.AvailableOnlyTallyThreshold,
+                NextAgentCall = campaign.NextAgentCall,
+                AlternateNumberDialing = campaign.AlternateNumberDialing,
+                ScheduledCallbacks = campaign.ScheduledCallbacks,
+                AllowInbound = campaign.AllowInbound,
+                ForceResetHopper = campaign.ForceResetHopper,
+                HopperDuplicateCheck = campaign.HopperDuplicateCheck,
+                GetCallLaunch = campaign.GetCallLaunch,
                 TimeZone = campaign.TimeZone,
                 CallStartTime = campaign.CallStartTime,
                 CallEndTime = campaign.CallEndTime,
@@ -190,13 +344,48 @@ public class CampaignFunctions
                 EnableAnsweringMachineDetection = campaign.EnableAnsweringMachineDetection,
                 AnsweringMachineAction = campaign.AnsweringMachineAction,
                 AnsweringMachineMessage = campaign.AnsweringMachineMessage,
+                LeadOrder = campaign.LeadOrder,
+                RandomizeLeadOrder = campaign.RandomizeLeadOrder,
+                LeadOrderSecondary = campaign.LeadOrderSecondary,
+                HopperLevel = campaign.HopperLevel,
+                OutboundCallerId = campaign.OutboundCallerId,
+                TransferConf1 = campaign.TransferConf1,
+                TransferConf2 = campaign.TransferConf2,
+                TransferConf3 = campaign.TransferConf3,
+                TransferConf4 = campaign.TransferConf4,
+                TransferConf5 = campaign.TransferConf5,
+                XferConfADtmf = campaign.XferConfADtmf,
+                XferConfANumber = campaign.XferConfANumber,
+                XferConfBDtmf = campaign.XferConfBDtmf,
+                XferConfBNumber = campaign.XferConfBNumber,
+                ContainerEntry = campaign.ContainerEntry,
+                ManualDialFilter = campaign.ManualDialFilter,
+                DispoCallUrl = campaign.DispoCallUrl,
+                WebForm1 = campaign.WebForm1,
+                WebForm2 = campaign.WebForm2,
+                WebForm3 = campaign.WebForm3,
+                WrapupSeconds = campaign.WrapupSeconds,
+                DialStatuses = campaign.DialStatuses,
+                LeadFilterId = campaign.LeadFilterId,
+                DropCallTimer = campaign.DropCallTimer,
+                SafeHarborMessage = campaign.SafeHarborMessage,
+                MaxDropPercentage = campaign.MaxDropPercentage,
                 IsActive = campaign.IsActive,
                 Priority = campaign.Priority,
                 LocationRestrictions = campaign.LocationRestrictions,
                 EnableCallRecording = campaign.EnableCallRecording,
                 CustomFields = campaign.CustomFields,
+                RecyclingRules = campaign.RecyclingRules,
+                EnableAutoRecycling = campaign.EnableAutoRecycling,
+                MaxRecycleCount = campaign.MaxRecycleCount,
+                StatsLastUpdated = campaign.StatsLastUpdated,
+                TotalDialedToday = campaign.TotalDialedToday,
+                TotalContactsToday = campaign.TotalContactsToday,
+                CurrentDropRate = campaign.CurrentDropRate,
                 CreatedAt = campaign.CreatedAt,
-                UpdatedAt = campaign.UpdatedAt
+                UpdatedAt = campaign.UpdatedAt,
+                CreatedBy = campaign.CreatedBy,
+                UpdatedBy = campaign.UpdatedBy
             };
 
             var response = req.CreateResponse(HttpStatusCode.Created);
@@ -239,28 +428,76 @@ public class CampaignFunctions
                 return notFoundResponse;
             }
 
-            // Update campaign properties
+            // Update all campaign properties with comprehensive VICIdial field support
             campaign.Name = updateDto.Name;
             campaign.Description = updateDto.Description;
+            campaign.DialMethod = updateDto.DialMethod;
             campaign.DialingRatio = updateDto.DialingRatio;
             campaign.ApplyRatioToIdleAgentsOnly = updateDto.ApplyRatioToIdleAgentsOnly;
+            campaign.AdaptiveMaxLevel = updateDto.AdaptiveMaxLevel;
+            campaign.DialTimeout = updateDto.DialTimeout;
             campaign.MaxConcurrentCalls = updateDto.MaxConcurrentCalls;
-            campaign.TimeZone = updateDto.TimeZone ?? campaign.TimeZone;
-            campaign.CallStartTime = updateDto.CallStartTime ?? campaign.CallStartTime;
-            campaign.CallEndTime = updateDto.CallEndTime ?? campaign.CallEndTime;
-            campaign.AllowedDaysOfWeek = updateDto.AllowedDaysOfWeek ?? campaign.AllowedDaysOfWeek;
+            campaign.DialPrefix = updateDto.DialPrefix;
+            campaign.ManualDialPrefix = updateDto.ManualDialPrefix;
+            campaign.ThreeWayDialPrefix = updateDto.ThreeWayDialPrefix;
+            campaign.ParkExtension = updateDto.ParkExtension;
+            campaign.ParkFileName = updateDto.ParkFileName;
+            campaign.VoicemailExtension = updateDto.VoicemailExtension;
+            campaign.AnsweringMachineExtension = updateDto.AnsweringMachineExtension;
+            campaign.AvailableOnlyRatioTally = updateDto.AvailableOnlyRatioTally;
+            campaign.AvailableOnlyTallyThreshold = updateDto.AvailableOnlyTallyThreshold;
+            campaign.NextAgentCall = updateDto.NextAgentCall;
+            campaign.AlternateNumberDialing = updateDto.AlternateNumberDialing;
+            campaign.ScheduledCallbacks = updateDto.ScheduledCallbacks;
+            campaign.AllowInbound = updateDto.AllowInbound;
+            campaign.ForceResetHopper = updateDto.ForceResetHopper;
+            campaign.HopperDuplicateCheck = updateDto.HopperDuplicateCheck;
+            campaign.GetCallLaunch = updateDto.GetCallLaunch;
+            campaign.TimeZone = updateDto.TimeZone;
+            campaign.CallStartTime = updateDto.CallStartTime;
+            campaign.CallEndTime = updateDto.CallEndTime;
+            campaign.AllowedDaysOfWeek = updateDto.AllowedDaysOfWeek;
             campaign.RespectLeadTimeZone = updateDto.RespectLeadTimeZone;
             campaign.MinCallInterval = updateDto.MinCallInterval;
             campaign.MaxCallAttempts = updateDto.MaxCallAttempts;
             campaign.CallAttemptDelay = updateDto.CallAttemptDelay;
             campaign.EnableAnsweringMachineDetection = updateDto.EnableAnsweringMachineDetection;
-            campaign.AnsweringMachineAction = updateDto.AnsweringMachineAction ?? campaign.AnsweringMachineAction;
+            campaign.AnsweringMachineAction = updateDto.AnsweringMachineAction;
             campaign.AnsweringMachineMessage = updateDto.AnsweringMachineMessage;
+            campaign.LeadOrder = updateDto.LeadOrder;
+            campaign.RandomizeLeadOrder = updateDto.RandomizeLeadOrder;
+            campaign.LeadOrderSecondary = updateDto.LeadOrderSecondary;
+            campaign.HopperLevel = updateDto.HopperLevel;
+            campaign.OutboundCallerId = updateDto.OutboundCallerId;
+            campaign.TransferConf1 = updateDto.TransferConf1;
+            campaign.TransferConf2 = updateDto.TransferConf2;
+            campaign.TransferConf3 = updateDto.TransferConf3;
+            campaign.TransferConf4 = updateDto.TransferConf4;
+            campaign.TransferConf5 = updateDto.TransferConf5;
+            campaign.XferConfADtmf = updateDto.XferConfADtmf;
+            campaign.XferConfANumber = updateDto.XferConfANumber;
+            campaign.XferConfBDtmf = updateDto.XferConfBDtmf;
+            campaign.XferConfBNumber = updateDto.XferConfBNumber;
+            campaign.ContainerEntry = updateDto.ContainerEntry;
+            campaign.ManualDialFilter = updateDto.ManualDialFilter;
+            campaign.DispoCallUrl = updateDto.DispoCallUrl;
+            campaign.WebForm1 = updateDto.WebForm1;
+            campaign.WebForm2 = updateDto.WebForm2;
+            campaign.WebForm3 = updateDto.WebForm3;
+            campaign.WrapupSeconds = updateDto.WrapupSeconds;
+            campaign.DialStatuses = updateDto.DialStatuses;
+            campaign.LeadFilterId = updateDto.LeadFilterId;
+            campaign.DropCallTimer = updateDto.DropCallTimer;
+            campaign.SafeHarborMessage = updateDto.SafeHarborMessage;
+            campaign.MaxDropPercentage = updateDto.MaxDropPercentage;
             campaign.IsActive = updateDto.IsActive;
             campaign.Priority = updateDto.Priority;
             campaign.LocationRestrictions = updateDto.LocationRestrictions;
             campaign.EnableCallRecording = updateDto.EnableCallRecording;
             campaign.CustomFields = updateDto.CustomFields;
+            campaign.RecyclingRules = updateDto.RecyclingRules;
+            campaign.EnableAutoRecycling = updateDto.EnableAutoRecycling;
+            campaign.MaxRecycleCount = updateDto.MaxRecycleCount;
             campaign.UpdatedAt = DateTime.UtcNow;
             campaign.UpdatedBy = "System"; // TODO: Get from authentication context
 
@@ -271,9 +508,28 @@ public class CampaignFunctions
                 Id = campaign.Id,
                 Name = campaign.Name,
                 Description = campaign.Description,
+                DialMethod = campaign.DialMethod,
                 DialingRatio = campaign.DialingRatio,
                 ApplyRatioToIdleAgentsOnly = campaign.ApplyRatioToIdleAgentsOnly,
+                AdaptiveMaxLevel = campaign.AdaptiveMaxLevel,
+                DialTimeout = campaign.DialTimeout,
                 MaxConcurrentCalls = campaign.MaxConcurrentCalls,
+                DialPrefix = campaign.DialPrefix,
+                ManualDialPrefix = campaign.ManualDialPrefix,
+                ThreeWayDialPrefix = campaign.ThreeWayDialPrefix,
+                ParkExtension = campaign.ParkExtension,
+                ParkFileName = campaign.ParkFileName,
+                VoicemailExtension = campaign.VoicemailExtension,
+                AnsweringMachineExtension = campaign.AnsweringMachineExtension,
+                AvailableOnlyRatioTally = campaign.AvailableOnlyRatioTally,
+                AvailableOnlyTallyThreshold = campaign.AvailableOnlyTallyThreshold,
+                NextAgentCall = campaign.NextAgentCall,
+                AlternateNumberDialing = campaign.AlternateNumberDialing,
+                ScheduledCallbacks = campaign.ScheduledCallbacks,
+                AllowInbound = campaign.AllowInbound,
+                ForceResetHopper = campaign.ForceResetHopper,
+                HopperDuplicateCheck = campaign.HopperDuplicateCheck,
+                GetCallLaunch = campaign.GetCallLaunch,
                 TimeZone = campaign.TimeZone,
                 CallStartTime = campaign.CallStartTime,
                 CallEndTime = campaign.CallEndTime,
@@ -285,13 +541,48 @@ public class CampaignFunctions
                 EnableAnsweringMachineDetection = campaign.EnableAnsweringMachineDetection,
                 AnsweringMachineAction = campaign.AnsweringMachineAction,
                 AnsweringMachineMessage = campaign.AnsweringMachineMessage,
+                LeadOrder = campaign.LeadOrder,
+                RandomizeLeadOrder = campaign.RandomizeLeadOrder,
+                LeadOrderSecondary = campaign.LeadOrderSecondary,
+                HopperLevel = campaign.HopperLevel,
+                OutboundCallerId = campaign.OutboundCallerId,
+                TransferConf1 = campaign.TransferConf1,
+                TransferConf2 = campaign.TransferConf2,
+                TransferConf3 = campaign.TransferConf3,
+                TransferConf4 = campaign.TransferConf4,
+                TransferConf5 = campaign.TransferConf5,
+                XferConfADtmf = campaign.XferConfADtmf,
+                XferConfANumber = campaign.XferConfANumber,
+                XferConfBDtmf = campaign.XferConfBDtmf,
+                XferConfBNumber = campaign.XferConfBNumber,
+                ContainerEntry = campaign.ContainerEntry,
+                ManualDialFilter = campaign.ManualDialFilter,
+                DispoCallUrl = campaign.DispoCallUrl,
+                WebForm1 = campaign.WebForm1,
+                WebForm2 = campaign.WebForm2,
+                WebForm3 = campaign.WebForm3,
+                WrapupSeconds = campaign.WrapupSeconds,
+                DialStatuses = campaign.DialStatuses,
+                LeadFilterId = campaign.LeadFilterId,
+                DropCallTimer = campaign.DropCallTimer,
+                SafeHarborMessage = campaign.SafeHarborMessage,
+                MaxDropPercentage = campaign.MaxDropPercentage,
                 IsActive = campaign.IsActive,
                 Priority = campaign.Priority,
                 LocationRestrictions = campaign.LocationRestrictions,
                 EnableCallRecording = campaign.EnableCallRecording,
                 CustomFields = campaign.CustomFields,
+                RecyclingRules = campaign.RecyclingRules,
+                EnableAutoRecycling = campaign.EnableAutoRecycling,
+                MaxRecycleCount = campaign.MaxRecycleCount,
+                StatsLastUpdated = campaign.StatsLastUpdated,
+                TotalDialedToday = campaign.TotalDialedToday,
+                TotalContactsToday = campaign.TotalContactsToday,
+                CurrentDropRate = campaign.CurrentDropRate,
                 CreatedAt = campaign.CreatedAt,
-                UpdatedAt = campaign.UpdatedAt
+                UpdatedAt = campaign.UpdatedAt,
+                CreatedBy = campaign.CreatedBy,
+                UpdatedBy = campaign.UpdatedBy
             };
 
             var response = req.CreateResponse(HttpStatusCode.OK);

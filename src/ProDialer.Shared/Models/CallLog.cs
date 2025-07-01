@@ -48,15 +48,38 @@ public class CallLog
     public string CallStatus { get; set; } = "Initiated";
     
     /// <summary>
-    /// Outcome of the call: Connected, NoAnswer, Busy, Failed, Voicemail, AnsweringMachine
+    /// Call progress states: DIALING, RINGING, BUSY, NO_ANSWER, ANSWERED, HANGUP, FAILED
+    /// </summary>
+    [StringLength(20)]
+    public string? CallProgress { get; set; }
+    
+    /// <summary>
+    /// Answering machine detection result: HUMAN, MACHINE, UNKNOWN
+    /// </summary>
+    [StringLength(20)]
+    public string? AmdResult { get; set; }
+    
+    /// <summary>
+    /// Detailed call outcome: ANSWERED_HUMAN, ANSWERED_MACHINE, BUSY, NO_ANSWER, FAILED, DISCONNECTED
     /// </summary>
     [StringLength(50)]
     public string? CallOutcome { get; set; }
     
     /// <summary>
+    /// Hangup cause: NORMAL, BUSY, NO_ANSWER, FAILED, AGENT_HANGUP, CUSTOMER_HANGUP
+    /// </summary>
+    [StringLength(50)]
+    public string? HangupCause { get; set; }
+    
+    /// <summary>
+    /// SIP response code (if applicable)
+    /// </summary>
+    public int? SipResponseCode { get; set; }
+    
+    /// <summary>
     /// When the call was initiated
     /// </summary>
-    public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+    public DateTime StartedAt { get; set; }
     
     /// <summary>
     /// When the call was answered (if applicable)
@@ -179,10 +202,46 @@ public class CallLog
     /// </summary>
     public DateTime? LocalTime { get; set; }
     
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>
+    /// Lead attempt count at time of this call
+    /// </summary>
+    public int LeadAttemptNumber { get; set; } = 1;
+    
+    /// <summary>
+    /// Disposition code ID if call was dispositioned
+    /// </summary>
+    public int? DispositionCodeId { get; set; }
+    
+    /// <summary>
+    /// Agent wrapup time in seconds
+    /// </summary>
+    public int WrapupSeconds { get; set; } = 0;
+    
+    /// <summary>
+    /// Compliance flags (JSON): {"timezone_valid": true, "dnc_checked": true}
+    /// </summary>
+    public string? ComplianceFlags { get; set; }
+    
+    /// <summary>
+    /// Whether this call was monitored
+    /// </summary>
+    public bool WasMonitored { get; set; } = false;
+    
+    /// <summary>
+    /// Three-way call participants (JSON array)
+    /// </summary>
+    public string? ThreeWayParticipants { get; set; }
+    
+    /// <summary>
+    /// Transfer details if call was transferred (JSON)
+    /// </summary>
+    public string? TransferDetails { get; set; }
+    
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     
     // Navigation properties
     public virtual Campaign Campaign { get; set; } = null!;
     public virtual Lead Lead { get; set; } = null!;
+    public virtual DispositionCode? DispositionCode { get; set; }
 }

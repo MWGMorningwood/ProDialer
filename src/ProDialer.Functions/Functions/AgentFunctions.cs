@@ -83,16 +83,30 @@ public class AgentFunctions
                 .Select(a => new AgentSummaryDto
                 {
                     Id = a.Id,
+                    UserId = a.UserId,
                     FirstName = a.FirstName,
                     LastName = a.LastName,
                     FullName = a.FullName,
                     Email = a.Email,
-                    Phone = a.PhoneNumber,
-                    Department = a.Role,
-                    Team = a.QualifiedCampaigns,
-                    IsActive = a.IsActive,
+                    PhoneNumber = a.PhoneNumber,
                     Status = a.Status,
-                    LastLoginAt = a.CurrentSessionStartedAt,
+                    IsLoggedIn = a.IsLoggedIn,
+                    IsOnCall = a.IsOnCall,
+                    ActiveCalls = a.ActiveCalls,
+                    MaxConcurrentCalls = a.MaxConcurrentCalls,
+                    SkillLevel = a.SkillLevel,
+                    QualifiedCampaigns = a.QualifiedCampaigns,
+                    Languages = a.Languages,
+                    TimeZone = a.TimeZone,
+                    Role = a.Role,
+                    Supervisor = a.Supervisor,
+                    IsActive = a.IsActive,
+                    Extension = a.Extension,
+                    CurrentSessionStartedAt = a.CurrentSessionStartedAt,
+                    LastLoggedOutAt = a.LastLoggedOutAt,
+                    TodayLoggedInMinutes = a.TodayLoggedInMinutes,
+                    TodayCallsHandled = a.TodayCallsHandled,
+                    TodayTalkTimeMinutes = a.TodayTalkTimeMinutes,
                     CreatedAt = a.CreatedAt,
                     UpdatedAt = a.UpdatedAt,
                     // Performance metrics will be calculated separately for performance
@@ -152,32 +166,41 @@ public class AgentFunctions
             var agentDto = new AgentDetailDto
             {
                 Id = agent.Id,
+                UserId = agent.UserId,
                 FirstName = agent.FirstName,
                 LastName = agent.LastName,
                 FullName = agent.FullName,
                 Email = agent.Email,
-                Phone = agent.PhoneNumber,
-                Department = agent.Role,
-                Team = agent.QualifiedCampaigns,
-                Supervisor = agent.Supervisor,
-                HireDate = null, // Not available in this model
-                Skills = agent.Languages,
-                Languages = agent.Languages,
-                CanHandleInbound = true, // Not available in model, defaulting
-                CanHandleOutbound = true, // Not available in model, defaulting
-                HourlyRate = null, // Not available in this model
-                Notes = null, // Not available in this model
-                IsActive = agent.IsActive,
+                PhoneNumber = agent.PhoneNumber,
                 Status = agent.Status,
-                LastLoginAt = agent.CurrentSessionStartedAt,
-                LastLogoutAt = agent.LastLoggedOutAt,
+                IsLoggedIn = agent.IsLoggedIn,
+                IsOnCall = agent.IsOnCall,
+                ActiveCalls = agent.ActiveCalls,
+                MaxConcurrentCalls = agent.MaxConcurrentCalls,
+                SkillLevel = agent.SkillLevel,
+                QualifiedCampaigns = agent.QualifiedCampaigns,
+                Languages = agent.Languages,
+                TimeZone = agent.TimeZone,
+                Role = agent.Role,
+                Supervisor = agent.Supervisor,
+                IsActive = agent.IsActive,
+                Extension = agent.Extension,
+                CurrentSessionStartedAt = agent.CurrentSessionStartedAt,
+                LastLoggedOutAt = agent.LastLoggedOutAt,
+                TodayLoggedInMinutes = agent.TodayLoggedInMinutes,
+                TodayCallsHandled = agent.TodayCallsHandled,
+                TodayTalkTimeMinutes = agent.TodayTalkTimeMinutes,
                 CreatedAt = agent.CreatedAt,
                 UpdatedAt = agent.UpdatedAt,
+                CommunicationEndpoint = agent.CommunicationEndpoint,
+                Tags = agent.Tags,
+                CustomFields = agent.CustomFields,
                 
                 // Performance metrics
                 TotalCalls = callLogs.Count,
                 ConnectedCalls = callLogs.Count(cl => cl.CallStatus == "Connected"),
                 AverageCallDuration = callLogs.Count > 0 ? (decimal)callLogs.Average(cl => cl.DurationSeconds) : 0,
+                ConversionRate = callLogs.Count > 0 ? (decimal)callLogs.Count(cl => cl.Disposition == "Sale") / callLogs.Count * 100 : 0,
                 TotalCallsToday = todayCallLogs.Count,
                 ConnectedCallsToday = todayCallLogs.Count(cl => cl.CallStatus == "Connected"),
                 TotalTalkTimeToday = todayCallLogs.Sum(cl => cl.DurationSeconds),
@@ -248,17 +271,24 @@ public class AgentFunctions
 
             var agent = new Agent
             {
-                UserId = createDto.Email, // Using email as user ID for now
+                UserId = createDto.UserId,
                 FirstName = createDto.FirstName,
                 LastName = createDto.LastName,
                 Email = createDto.Email,
-                PhoneNumber = createDto.Phone,
-                Role = createDto.Department,
-                QualifiedCampaigns = createDto.Team,
-                Supervisor = createDto.Supervisor,
+                PhoneNumber = createDto.PhoneNumber,
+                MaxConcurrentCalls = createDto.MaxConcurrentCalls,
+                SkillLevel = createDto.SkillLevel,
+                QualifiedCampaigns = createDto.QualifiedCampaigns,
                 Languages = createDto.Languages,
+                TimeZone = createDto.TimeZone,
+                Role = createDto.Role,
+                Supervisor = createDto.Supervisor,
+                Extension = createDto.Extension,
+                CommunicationEndpoint = createDto.CommunicationEndpoint,
+                Tags = createDto.Tags,
+                CustomFields = createDto.CustomFields,
                 IsActive = true,
-                Status = "Available",
+                Status = "LoggedOut",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 CreatedBy = "System", // TODO: Get from authenticated user
@@ -325,16 +355,32 @@ public class AgentFunctions
             }
 
             // Update properties
+            agent.UserId = updateDto.UserId;
             agent.FirstName = updateDto.FirstName;
             agent.LastName = updateDto.LastName;
             agent.Email = updateDto.Email;
-            agent.PhoneNumber = updateDto.Phone;
-            agent.Role = updateDto.Department;
-            agent.QualifiedCampaigns = updateDto.Team;
-            agent.Supervisor = updateDto.Supervisor;
+            agent.PhoneNumber = updateDto.PhoneNumber;
+            agent.MaxConcurrentCalls = updateDto.MaxConcurrentCalls;
+            agent.SkillLevel = updateDto.SkillLevel;
+            agent.QualifiedCampaigns = updateDto.QualifiedCampaigns;
             agent.Languages = updateDto.Languages;
-            agent.IsActive = updateDto.IsActive;
+            agent.TimeZone = updateDto.TimeZone;
+            agent.Role = updateDto.Role;
+            agent.Supervisor = updateDto.Supervisor;
+            agent.Extension = updateDto.Extension;
+            agent.CommunicationEndpoint = updateDto.CommunicationEndpoint;
+            agent.Tags = updateDto.Tags;
+            agent.CustomFields = updateDto.CustomFields;
             agent.Status = updateDto.Status;
+            agent.IsLoggedIn = updateDto.IsLoggedIn;
+            agent.IsOnCall = updateDto.IsOnCall;
+            agent.ActiveCalls = updateDto.ActiveCalls;
+            agent.CurrentSessionStartedAt = updateDto.CurrentSessionStartedAt;
+            agent.LastLoggedOutAt = updateDto.LastLoggedOutAt;
+            agent.TodayLoggedInMinutes = updateDto.TodayLoggedInMinutes;
+            agent.TodayCallsHandled = updateDto.TodayCallsHandled;
+            agent.TodayTalkTimeMinutes = updateDto.TodayTalkTimeMinutes;
+            agent.IsActive = updateDto.IsActive;
             agent.UpdatedAt = DateTime.UtcNow;
             agent.UpdatedBy = "System"; // TODO: Get from authenticated user
 

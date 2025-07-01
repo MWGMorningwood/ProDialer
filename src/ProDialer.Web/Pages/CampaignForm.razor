@@ -6,109 +6,463 @@
 
 <PageTitle>@(IsEditMode ? "Edit Campaign" : "Create Campaign")</PageTitle>
 
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0">@(IsEditMode ? "Edit Campaign" : "Create New Campaign")</h4>
-            </div>
-            <div class="card-body">
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @errorMessage
-                    </div>
-                }
-
-                <EditForm Model="campaignDto" OnValidSubmit="HandleSubmit">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="text-danger" />
-
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Campaign Name <span class="text-danger">*</span></label>
-                        <InputText id="name" class="form-control" @bind-Value="campaignDto.Name" />
-                        <ValidationMessage For="@(() => campaignDto.Name)" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <InputTextArea id="description" class="form-control" rows="3" @bind-Value="campaignDto.Description" />
-                        <ValidationMessage For="@(() => campaignDto.Description)" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="dialingRatio" class="form-label">Dialing Ratio <span class="text-danger">*</span></label>
-                        <InputNumber id="dialingRatio" class="form-control" @bind-Value="campaignDto.DialingRatio" min="1" max="10" />
-                        <div class="form-text">Number of calls to make per available agent (1-10)</div>
-                        <ValidationMessage For="@(() => campaignDto.DialingRatio)" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
-                        <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="campaignDto.MaxCallAttempts" min="1" max="20" />
-                        <div class="form-text">Maximum number of times to attempt calling a lead</div>
-                        <ValidationMessage For="@(() => campaignDto.MaxCallAttempts)" />
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="callAttemptDelay" class="form-label">Call Attempt Delay (minutes)</label>
-                                <InputNumber id="callAttemptDelay" class="form-control" @bind-Value="campaignDto.CallAttemptDelay" min="1" max="300" />
-                                <ValidationMessage For="@(() => campaignDto.CallAttemptDelay)" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="minCallInterval" class="form-label">Min Call Interval (minutes)</label>
-                                <InputNumber id="minCallInterval" class="form-control" @bind-Value="campaignDto.MinCallInterval" min="1" max="1440" />
-                                <ValidationMessage For="@(() => campaignDto.MinCallInterval)" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <InputCheckbox id="enableAnsweringMachineDetection" class="form-check-input" @bind-Value="campaignDto.EnableAnsweringMachineDetection" />
-                            <label for="enableAnsweringMachineDetection" class="form-check-label">
-                                Enable Answering Machine Detection
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <InputCheckbox id="enableCallRecording" class="form-check-input" @bind-Value="campaignDto.EnableCallRecording" />
-                            <label for="enableCallRecording" class="form-check-label">
-                                Enable Call Recording
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <InputCheckbox id="isActive" class="form-check-input" @bind-Value="campaignDto.IsActive" />
-                            <label for="isActive" class="form-check-label">
-                                Campaign is Active
-                            </label>
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
-                            @if (isSubmitting)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            }
-                            @(IsEditMode ? "Update Campaign" : "Create Campaign")
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">@(IsEditMode ? "Edit Campaign" : "Create New Campaign")</h4>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn @(activeTab == "basic" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("basic"))">
+                            Basic Settings
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
-                            Cancel
+                        <button type="button" class="btn @(activeTab == "dialing" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("dialing"))">
+                            Dialing Options
+                        </button>
+                        <button type="button" class="btn @(activeTab == "advanced" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("advanced"))">
+                            Advanced Features
+                        </button>
+                        <button type="button" class="btn @(activeTab == "compliance" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("compliance"))">
+                            AMD & Recording
+                        </button>
+                        <button type="button" class="btn @(activeTab == "scheduling" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("scheduling"))">
+                            Time & Scheduling
                         </button>
                     </div>
-                </EditForm>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    <EditForm Model="campaignDto" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <!-- Basic Settings Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "basic" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Basic Campaign Information</h5>
+                            <ValidationSummary class="text-danger" />
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Campaign Name <span class="text-danger">*</span></label>
+                                        <InputText id="name" class="form-control" @bind-Value="campaignDto.Name" />
+                                        <ValidationMessage For="@(() => campaignDto.Name)" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="priority" class="form-label">Campaign Priority</label>
+                                        <InputNumber id="priority" class="form-control" @bind-Value="campaignDto.Priority" min="1" max="10" />
+                                        <div class="form-text">Priority level (1-10, higher = more important)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="campaignDto.Description" />
+                                <ValidationMessage For="@(() => campaignDto.Description)" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="dialMethod" class="form-label">Dial Method</label>
+                                        <InputSelect id="dialMethod" class="form-select" @bind-Value="campaignDto.DialMethod">
+                                            <option value="MANUAL">Manual</option>
+                                            <option value="RATIO">Ratio</option>
+                                            <option value="ADAPT_AVERAGE">Adaptive Average</option>
+                                            <option value="ADAPT_HARD_LIMIT">Adaptive Hard Limit</option>
+                                            <option value="ADAPT_TAPERED">Adaptive Tapered</option>
+                                            <option value="PREVIEW">Preview</option>
+                                            <option value="PREDICTIVE">Predictive</option>
+                                        </InputSelect>
+                                        <div class="form-text">Controls how calls are initiated</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="campaignScript" class="form-label">Lead Order</label>
+                                        <InputSelect id="leadOrder" class="form-select" @bind-Value="campaignDto.LeadOrder">
+                                            <option value="random">Random</option>
+                                            <option value="up">Up (Ascending)</option>
+                                            <option value="down">Down (Descending)</option>
+                                            <option value="newer_first">Newer First</option>
+                                            <option value="older_first">Older First</option>
+                                        </InputSelect>
+                                        <div class="form-text">Order in which leads are called</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="hopperLevel" class="form-label">Hopper Level</label>
+                                        <InputNumber id="hopperLevel" class="form-control" @bind-Value="campaignDto.HopperLevel" min="10" max="10000" />
+                                        <div class="form-text">Number of leads to keep in hopper</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="isActive" class="form-check-input" @bind-Value="campaignDto.IsActive" />
+                                        <label for="isActive" class="form-check-label">
+                                            Campaign is Active
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="allowInbound" class="form-check-input" @bind-Value="campaignDto.AllowInbound" />
+                                        <label for="allowInbound" class="form-check-label">
+                                            Allow Inbound Calls
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dialing Options Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "dialing" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Dialing Configuration</h5>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="dialingRatio" class="form-label">Dialing Ratio <span class="text-danger">*</span></label>
+                                        <InputNumber id="dialingRatio" class="form-control" @bind-Value="campaignDto.DialingRatio" min="0.1" max="50" step="0.1" />
+                                        <div class="form-text">Calls per available agent</div>
+                                        <ValidationMessage For="@(() => campaignDto.DialingRatio)" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="adaptiveMaxLevel" class="form-label">Adaptive Max Level</label>
+                                        <InputNumber id="adaptiveMaxLevel" class="form-control" @bind-Value="campaignDto.AdaptiveMaxLevel" min="0.1" max="10" step="0.1" />
+                                        <div class="form-text">Maximum adaptive dialing level</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="maxDropPercentage" class="form-label">Max Drop Percentage</label>
+                                        <InputNumber id="maxDropPercentage" class="form-control" @bind-Value="campaignDto.MaxDropPercentage" min="0" max="100" step="0.1" />
+                                        <div class="form-text">Maximum allowable drop rate (%)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="dialTimeout" class="form-label">Dial Timeout (seconds)</label>
+                                        <InputNumber id="dialTimeout" class="form-control" @bind-Value="campaignDto.DialTimeout" min="10" max="300" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="maxConcurrentCalls" class="form-label">Max Concurrent Calls</label>
+                                        <InputNumber id="maxConcurrentCalls" class="form-control" @bind-Value="campaignDto.MaxConcurrentCalls" min="1" max="1000" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="nextAgentCall" class="form-label">Agent Selection Method</label>
+                                        <InputSelect id="nextAgentCall" class="form-select" @bind-Value="campaignDto.NextAgentCall">
+                                            <option value="longest_wait_time">Longest Wait Time</option>
+                                            <option value="overall_user_level">Overall User Level</option>
+                                            <option value="campaign_grade_level">Campaign Grade Level</option>
+                                            <option value="random">Random</option>
+                                            <option value="fewest_calls">Fewest Calls</option>
+                                            <option value="fewest_calls_campaign">Fewest Calls Campaign</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="applyRatioToIdleAgentsOnly" class="form-check-input" @bind-Value="campaignDto.ApplyRatioToIdleAgentsOnly" />
+                                        <label for="applyRatioToIdleAgentsOnly" class="form-check-label">
+                                            Apply Ratio to Idle Agents Only
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="availableOnlyRatioTally" class="form-check-input" @bind-Value="campaignDto.AvailableOnlyRatioTally" />
+                                        <label for="availableOnlyRatioTally" class="form-check-label">
+                                            Available Only Ratio Tally
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">Dial Prefixes & Extensions</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="dialPrefix" class="form-label">Dial Prefix</label>
+                                        <InputText id="dialPrefix" class="form-control" @bind-Value="campaignDto.DialPrefix" />
+                                        <div class="form-text">Prefix for outbound calls</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="manualDialPrefix" class="form-label">Manual Dial Prefix</label>
+                                        <InputText id="manualDialPrefix" class="form-control" @bind-Value="campaignDto.ManualDialPrefix" />
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="threeWayDialPrefix" class="form-label">3-Way Dial Prefix</label>
+                                        <InputText id="threeWayDialPrefix" class="form-control" @bind-Value="campaignDto.ThreeWayDialPrefix" />
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="parkExtension" class="form-label">Park Extension</label>
+                                        <InputText id="parkExtension" class="form-control" @bind-Value="campaignDto.ParkExtension" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Features Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "advanced" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Advanced Features</h5>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
+                                        <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="campaignDto.MaxCallAttempts" min="1" max="20" />
+                                        <div class="form-text">Maximum attempts per lead</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="callAttemptDelay" class="form-label">Call Attempt Delay (min)</label>
+                                        <InputNumber id="callAttemptDelay" class="form-control" @bind-Value="campaignDto.CallAttemptDelay" min="1" max="10080" />
+                                        <div class="form-text">Minutes between attempts</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="minCallInterval" class="form-label">Min Call Interval (min)</label>
+                                        <InputNumber id="minCallInterval" class="form-control" @bind-Value="campaignDto.MinCallInterval" min="1" max="1440" />
+                                        <div class="form-text">Minimum time between calls to same lead</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="alternateNumberDialing" class="form-check-input" @bind-Value="campaignDto.AlternateNumberDialing" />
+                                        <label for="alternateNumberDialing" class="form-check-label">
+                                            Alternate Number Dialing
+                                        </label>
+                                        <div class="form-text">Try alternate phone numbers</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="scheduledCallbacks" class="form-check-input" @bind-Value="campaignDto.ScheduledCallbacks" />
+                                        <label for="scheduledCallbacks" class="form-check-label">
+                                            Scheduled Callbacks
+                                        </label>
+                                        <div class="form-text">Enable callback scheduling</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="forceResetHopper" class="form-check-input" @bind-Value="campaignDto.ForceResetHopper" />
+                                        <label for="forceResetHopper" class="form-check-label">
+                                            Force Reset Hopper
+                                        </label>
+                                        <div class="form-text">Reset call hopper automatically</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="hopperDuplicateCheck" class="form-check-input" @bind-Value="campaignDto.HopperDuplicateCheck" />
+                                        <label for="hopperDuplicateCheck" class="form-check-label">
+                                            Hopper Duplicate Check
+                                        </label>
+                                        <div class="form-text">Prevent duplicate entries in hopper</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">Lead Recycling</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="enableAutoRecycling" class="form-check-input" @bind-Value="campaignDto.EnableAutoRecycling" />
+                                        <label for="enableAutoRecycling" class="form-check-label">
+                                            Enable Auto Recycling
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="maxRecycleCount" class="form-label">Max Recycle Count</label>
+                                        <InputNumber id="maxRecycleCount" class="form-control" @bind-Value="campaignDto.MaxRecycleCount" min="0" max="10" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="recyclingRules" class="form-label">Recycling Rules</label>
+                                <InputTextArea id="recyclingRules" class="form-control" rows="3" @bind-Value="campaignDto.RecyclingRules" />
+                                <div class="form-text">JSON configuration for recycling behavior</div>
+                            </div>
+                        </div>
+
+                        <!-- AMD & Recording Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "compliance" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Answering Machine Detection & Recording</h5>
+
+                            <h6 class="mb-3">Answering Machine Detection</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="enableAnsweringMachineDetection" class="form-check-input" @bind-Value="campaignDto.EnableAnsweringMachineDetection" />
+                                        <label for="enableAnsweringMachineDetection" class="form-check-label">
+                                            Enable Answering Machine Detection
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="answeringMachineAction" class="form-label">AMD Action</label>
+                                        <InputSelect id="answeringMachineAction" class="form-select" @bind-Value="campaignDto.AnsweringMachineAction">
+                                            <option value="Hangup">Hangup</option>
+                                            <option value="Message">Leave Message</option>
+                                            <option value="Transfer">Transfer to Agent</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="answeringMachineMessage" class="form-label">Answering Machine Message</label>
+                                <InputTextArea id="answeringMachineMessage" class="form-control" rows="3" @bind-Value="campaignDto.AnsweringMachineMessage" />
+                                <div class="form-text">Message to play when answering machine is detected</div>
+                            </div>
+
+                            <h6 class="mb-3">Call Recording</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="enableCallRecording" class="form-check-input" @bind-Value="campaignDto.EnableCallRecording" />
+                                        <label for="enableCallRecording" class="form-check-label">
+                                            Enable Call Recording
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="dropCallTimer" class="form-label">Drop Call Timer (seconds)</label>
+                                        <InputNumber id="dropCallTimer" class="form-control" @bind-Value="campaignDto.DropCallTimer" min="1" max="30" />
+                                        <div class="form-text">Time before dropping unanswered calls</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="safeHarborMessage" class="form-label">Safe Harbor Message</label>
+                                <InputText id="safeHarborMessage" class="form-control" @bind-Value="campaignDto.SafeHarborMessage" />
+                                <div class="form-text">Compliance message for safe harbor provisions</div>
+                            </div>
+                        </div>
+
+                        <!-- Time & Scheduling Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "scheduling" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Time & Scheduling Configuration</h5>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="timeZone" class="form-label">Campaign Time Zone</label>
+                                        <InputSelect id="timeZone" class="form-select" @bind-Value="campaignDto.TimeZone">
+                                            <option value="UTC">UTC</option>
+                                            <option value="America/New_York">Eastern Time</option>
+                                            <option value="America/Chicago">Central Time</option>
+                                            <option value="America/Denver">Mountain Time</option>
+                                            <option value="America/Los_Angeles">Pacific Time</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="callStartTime" class="form-label">Call Start Time</label>
+                                        <InputText id="callStartTime" class="form-control" @bind-Value="campaignDto.CallStartTime" />
+                                        <div class="form-text">Format: HH:MM (24-hour)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="callEndTime" class="form-label">Call End Time</label>
+                                        <InputText id="callEndTime" class="form-control" @bind-Value="campaignDto.CallEndTime" />
+                                        <div class="form-text">Format: HH:MM (24-hour)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="allowedDaysOfWeek" class="form-label">Allowed Days of Week</label>
+                                <InputText id="allowedDaysOfWeek" class="form-control" @bind-Value="campaignDto.AllowedDaysOfWeek" />
+                                <div class="form-text">Comma-separated: Monday,Tuesday,Wednesday,Thursday,Friday</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="respectLeadTimeZone" class="form-check-input" @bind-Value="campaignDto.RespectLeadTimeZone" />
+                                        <label for="respectLeadTimeZone" class="form-check-label">
+                                            Respect Lead Time Zone
+                                        </label>
+                                        <div class="form-text">Use individual lead time zones for call timing</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="randomizeLeadOrder" class="form-check-input" @bind-Value="campaignDto.RandomizeLeadOrder" />
+                                        <label for="randomizeLeadOrder" class="form-check-label">
+                                            Randomize Lead Order
+                                        </label>
+                                        <div class="form-text">Randomize lead calling order</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                @(IsEditMode ? "Update Campaign" : "Create Campaign")
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="NavigateBack">
+                                Cancel
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
             </div>
         </div>
     </div>
@@ -121,6 +475,7 @@
     private CreateCampaignDto campaignDto = new();
     private bool isSubmitting = false;
     private string? errorMessage;
+    private string activeTab = "basic";
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,18 +485,43 @@
         }
         else
         {
-            // Set defaults for new campaign
+            // Set comprehensive defaults for new campaign
             campaignDto = new CreateCampaignDto
             {
-                DialingRatio = 2,
-                MaxCallAttempts = 3,
-                CallAttemptDelay = 30,
+                Name = "",
+                Description = "",
+                DialMethod = "RATIO",
+                DialingRatio = 2.0m,
+                ApplyRatioToIdleAgentsOnly = true,
+                AdaptiveMaxLevel = 2.0m,
+                MaxDropPercentage = 3.0m,
+                DialTimeout = 30,
+                MaxConcurrentCalls = 50,
+                NextAgentCall = "longest_wait_time",
+                AlternateNumberDialing = false,
+                ScheduledCallbacks = true,
+                AllowInbound = false,
+                ForceResetHopper = false,
+                HopperDuplicateCheck = true,
+                TimeZone = "UTC",
+                CallStartTime = "08:00",
+                CallEndTime = "20:00",
+                AllowedDaysOfWeek = "Monday,Tuesday,Wednesday,Thursday,Friday",
+                RespectLeadTimeZone = true,
                 MinCallInterval = 60,
+                MaxCallAttempts = 3,
+                CallAttemptDelay = 15,
                 EnableAnsweringMachineDetection = true,
                 EnableCallRecording = false,
+                EnableAutoRecycling = false,
                 IsActive = true
             };
         }
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
     }
 
     private async Task LoadCampaign()
@@ -151,17 +531,77 @@
             var campaign = await Http.GetFromJsonAsync<CampaignDto>($"api/campaigns/{CampaignId}");
             if (campaign != null)
             {
-                // Map to create/update DTO
+                // Map comprehensive campaign data to create/update DTO
                 campaignDto = new CreateCampaignDto
                 {
                     Name = campaign.Name,
                     Description = campaign.Description,
+                    DialMethod = campaign.DialMethod,
                     DialingRatio = campaign.DialingRatio,
+                    ApplyRatioToIdleAgentsOnly = campaign.ApplyRatioToIdleAgentsOnly,
+                    AdaptiveMaxLevel = campaign.AdaptiveMaxLevel,
+                    MaxDropPercentage = campaign.MaxDropPercentage,
+                    DialTimeout = campaign.DialTimeout,
+                    MaxConcurrentCalls = campaign.MaxConcurrentCalls,
+                    DialPrefix = campaign.DialPrefix,
+                    ManualDialPrefix = campaign.ManualDialPrefix,
+                    ThreeWayDialPrefix = campaign.ThreeWayDialPrefix,
+                    ParkExtension = campaign.ParkExtension,
+                    ParkFileName = campaign.ParkFileName,
+                    VoicemailExtension = campaign.VoicemailExtension,
+                    AnsweringMachineExtension = campaign.AnsweringMachineExtension,
+                    AvailableOnlyRatioTally = campaign.AvailableOnlyRatioTally,
+                    AvailableOnlyTallyThreshold = campaign.AvailableOnlyTallyThreshold,
+                    NextAgentCall = campaign.NextAgentCall,
+                    AlternateNumberDialing = campaign.AlternateNumberDialing,
+                    ScheduledCallbacks = campaign.ScheduledCallbacks,
+                    AllowInbound = campaign.AllowInbound,
+                    ForceResetHopper = campaign.ForceResetHopper,
+                    HopperDuplicateCheck = campaign.HopperDuplicateCheck,
+                    GetCallLaunch = campaign.GetCallLaunch,
+                    TimeZone = campaign.TimeZone,
+                    CallStartTime = campaign.CallStartTime,
+                    CallEndTime = campaign.CallEndTime,
+                    AllowedDaysOfWeek = campaign.AllowedDaysOfWeek,
+                    RespectLeadTimeZone = campaign.RespectLeadTimeZone,
+                    MinCallInterval = campaign.MinCallInterval,
                     MaxCallAttempts = campaign.MaxCallAttempts,
                     CallAttemptDelay = campaign.CallAttemptDelay,
-                    MinCallInterval = campaign.MinCallInterval,
                     EnableAnsweringMachineDetection = campaign.EnableAnsweringMachineDetection,
+                    AnsweringMachineAction = campaign.AnsweringMachineAction,
+                    AnsweringMachineMessage = campaign.AnsweringMachineMessage,
+                    LeadOrder = campaign.LeadOrder,
+                    RandomizeLeadOrder = campaign.RandomizeLeadOrder,
+                    LeadOrderSecondary = campaign.LeadOrderSecondary,
+                    HopperLevel = campaign.HopperLevel,
+                    OutboundCallerId = campaign.OutboundCallerId,
+                    TransferConf1 = campaign.TransferConf1,
+                    TransferConf2 = campaign.TransferConf2,
+                    TransferConf3 = campaign.TransferConf3,
+                    TransferConf4 = campaign.TransferConf4,
+                    TransferConf5 = campaign.TransferConf5,
+                    XferConfADtmf = campaign.XferConfADtmf,
+                    XferConfANumber = campaign.XferConfANumber,
+                    XferConfBDtmf = campaign.XferConfBDtmf,
+                    XferConfBNumber = campaign.XferConfBNumber,
+                    ContainerEntry = campaign.ContainerEntry,
+                    ManualDialFilter = campaign.ManualDialFilter,
+                    DispoCallUrl = campaign.DispoCallUrl,
+                    WebForm1 = campaign.WebForm1,
+                    WebForm2 = campaign.WebForm2,
+                    WebForm3 = campaign.WebForm3,
+                    WrapupSeconds = campaign.WrapupSeconds,
+                    DialStatuses = campaign.DialStatuses,
+                    LeadFilterId = campaign.LeadFilterId,
+                    DropCallTimer = campaign.DropCallTimer,
+                    SafeHarborMessage = campaign.SafeHarborMessage,
+                    Priority = campaign.Priority,
+                    LocationRestrictions = campaign.LocationRestrictions,
                     EnableCallRecording = campaign.EnableCallRecording,
+                    CustomFields = campaign.CustomFields,
+                    RecyclingRules = campaign.RecyclingRules,
+                    EnableAutoRecycling = campaign.EnableAutoRecycling,
+                    MaxRecycleCount = campaign.MaxRecycleCount,
                     IsActive = campaign.IsActive
                 };
             }
@@ -186,12 +626,72 @@
                     Id = CampaignId!.Value,
                     Name = campaignDto.Name,
                     Description = campaignDto.Description,
+                    DialMethod = campaignDto.DialMethod,
                     DialingRatio = campaignDto.DialingRatio,
+                    ApplyRatioToIdleAgentsOnly = campaignDto.ApplyRatioToIdleAgentsOnly,
+                    AdaptiveMaxLevel = campaignDto.AdaptiveMaxLevel,
+                    MaxDropPercentage = campaignDto.MaxDropPercentage,
+                    DialTimeout = campaignDto.DialTimeout,
+                    MaxConcurrentCalls = campaignDto.MaxConcurrentCalls,
+                    DialPrefix = campaignDto.DialPrefix,
+                    ManualDialPrefix = campaignDto.ManualDialPrefix,
+                    ThreeWayDialPrefix = campaignDto.ThreeWayDialPrefix,
+                    ParkExtension = campaignDto.ParkExtension,
+                    ParkFileName = campaignDto.ParkFileName,
+                    VoicemailExtension = campaignDto.VoicemailExtension,
+                    AnsweringMachineExtension = campaignDto.AnsweringMachineExtension,
+                    AvailableOnlyRatioTally = campaignDto.AvailableOnlyRatioTally,
+                    AvailableOnlyTallyThreshold = campaignDto.AvailableOnlyTallyThreshold,
+                    NextAgentCall = campaignDto.NextAgentCall,
+                    AlternateNumberDialing = campaignDto.AlternateNumberDialing,
+                    ScheduledCallbacks = campaignDto.ScheduledCallbacks,
+                    AllowInbound = campaignDto.AllowInbound,
+                    ForceResetHopper = campaignDto.ForceResetHopper,
+                    HopperDuplicateCheck = campaignDto.HopperDuplicateCheck,
+                    GetCallLaunch = campaignDto.GetCallLaunch,
+                    TimeZone = campaignDto.TimeZone,
+                    CallStartTime = campaignDto.CallStartTime,
+                    CallEndTime = campaignDto.CallEndTime,
+                    AllowedDaysOfWeek = campaignDto.AllowedDaysOfWeek,
+                    RespectLeadTimeZone = campaignDto.RespectLeadTimeZone,
+                    MinCallInterval = campaignDto.MinCallInterval,
                     MaxCallAttempts = campaignDto.MaxCallAttempts,
                     CallAttemptDelay = campaignDto.CallAttemptDelay,
-                    MinCallInterval = campaignDto.MinCallInterval,
                     EnableAnsweringMachineDetection = campaignDto.EnableAnsweringMachineDetection,
+                    AnsweringMachineAction = campaignDto.AnsweringMachineAction,
+                    AnsweringMachineMessage = campaignDto.AnsweringMachineMessage,
+                    LeadOrder = campaignDto.LeadOrder,
+                    RandomizeLeadOrder = campaignDto.RandomizeLeadOrder,
+                    LeadOrderSecondary = campaignDto.LeadOrderSecondary,
+                    HopperLevel = campaignDto.HopperLevel,
+                    OutboundCallerId = campaignDto.OutboundCallerId,
+                    TransferConf1 = campaignDto.TransferConf1,
+                    TransferConf2 = campaignDto.TransferConf2,
+                    TransferConf3 = campaignDto.TransferConf3,
+                    TransferConf4 = campaignDto.TransferConf4,
+                    TransferConf5 = campaignDto.TransferConf5,
+                    XferConfADtmf = campaignDto.XferConfADtmf,
+                    XferConfANumber = campaignDto.XferConfANumber,
+                    XferConfBDtmf = campaignDto.XferConfBDtmf,
+                    XferConfBNumber = campaignDto.XferConfBNumber,
+                    ContainerEntry = campaignDto.ContainerEntry,
+                    ManualDialFilter = campaignDto.ManualDialFilter,
+                    DispoCallUrl = campaignDto.DispoCallUrl,
+                    WebForm1 = campaignDto.WebForm1,
+                    WebForm2 = campaignDto.WebForm2,
+                    WebForm3 = campaignDto.WebForm3,
+                    WrapupSeconds = campaignDto.WrapupSeconds,
+                    DialStatuses = campaignDto.DialStatuses,
+                    LeadFilterId = campaignDto.LeadFilterId,
+                    DropCallTimer = campaignDto.DropCallTimer,
+                    SafeHarborMessage = campaignDto.SafeHarborMessage,
+                    Priority = campaignDto.Priority,
+                    LocationRestrictions = campaignDto.LocationRestrictions,
                     EnableCallRecording = campaignDto.EnableCallRecording,
+                    CustomFields = campaignDto.CustomFields,
+                    RecyclingRules = campaignDto.RecyclingRules,
+                    EnableAutoRecycling = campaignDto.EnableAutoRecycling,
+                    MaxRecycleCount = campaignDto.MaxRecycleCount,
                     IsActive = campaignDto.IsActive
                 };
 

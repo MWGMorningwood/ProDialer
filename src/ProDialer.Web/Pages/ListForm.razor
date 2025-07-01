@@ -6,12 +6,29 @@
 
 <PageTitle>@(IsEditMode ? "Edit List" : "Create List") - ProDialer</PageTitle>
 
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-12 col-xl-10">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title mb-0">@(IsEditMode ? "Edit List" : "Create New List")</h3>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">@(IsEditMode ? "Edit List" : "Create New List")</h4>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn @(activeTab == "basic" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("basic"))">
+                            Basic Settings
+                        </button>
+                        <button type="button" class="btn @(activeTab == "calling" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("calling"))">
+                            Calling Rules
+                        </button>
+                        <button type="button" class="btn @(activeTab == "advanced" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("advanced"))">
+                            Advanced Features
+                        </button>
+                        <button type="button" class="btn @(activeTab == "forms" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("forms"))">
+                            Web Forms
+                        </button>
+                        <button type="button" class="btn @(activeTab == "transfer" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => SetActiveTab("transfer"))">
+                            Transfer Config
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if (errorMessage != null)
@@ -24,82 +41,374 @@
                     <EditForm Model="listDto" OnValidSubmit="HandleSubmit">
                         <DataAnnotationsValidator />
 
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name *</label>
-                            <InputText id="name" class="form-control" @bind-Value="listDto.Name" />
-                            <ValidationMessage For="@(() => listDto.Name)" />
-                        </div>
+                        <!-- Basic Settings Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "basic" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Basic List Information</h5>
+                            <ValidationSummary class="text-danger" />
 
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <InputTextArea id="description" class="form-control" rows="3" @bind-Value="listDto.Description" />
-                            <ValidationMessage For="@(() => listDto.Description)" />
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="priority" class="form-label">Priority</label>
-                                    <InputNumber id="priority" class="form-control" @bind-Value="listDto.Priority" min="1" max="10" />
-                                    <ValidationMessage For="@(() => listDto.Priority)" />
-                                    <div class="form-text">1 = Highest, 10 = Lowest</div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">List Name <span class="text-danger">*</span></label>
+                                        <InputText id="name" class="form-control" @bind-Value="listDto.Name" />
+                                        <ValidationMessage For="@(() => listDto.Name)" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="priority" class="form-label">Priority</label>
+                                        <InputNumber id="priority" class="form-control" @bind-Value="listDto.Priority" min="1" max="10" />
+                                        <div class="form-text">Priority level (1-10, higher = more important)</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <InputCheckbox id="callInOrder" class="form-check-input" @bind-Value="listDto.CallInOrder" />
-                                        <label class="form-check-label" for="callInOrder">
-                                            Call Leads in Order
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <InputTextArea id="description" class="form-control" rows="3" @bind-Value="listDto.Description" />
+                                <ValidationMessage For="@(() => listDto.Description)" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="callStrategy" class="form-label">Call Strategy</label>
+                                        <InputSelect id="callStrategy" class="form-select" @bind-Value="listDto.CallStrategy">
+                                            <option value="Sequential">Sequential</option>
+                                            <option value="Random">Random</option>
+                                            <option value="Priority">Priority-based</option>
+                                        </InputSelect>
+                                        <div class="form-text">How leads are selected from this list</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="source" class="form-label">Source</label>
+                                        <InputSelect id="source" class="form-select" @bind-Value="listDto.Source">
+                                            <option value="Manual">Manual Entry</option>
+                                            <option value="Import">Data Import</option>
+                                            <option value="API">API Integration</option>
+                                            <option value="Web">Web Form</option>
+                                            <option value="Partner">Partner Feed</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="listMixRatio" class="form-label">Mix Ratio</label>
+                                        <InputNumber id="listMixRatio" class="form-control" @bind-Value="listDto.ListMixRatio" min="0.1" max="100" step="0.1" />
+                                        <div class="form-text">Weight for list mixing (1.0 = normal)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sourceReference" class="form-label">Source Reference</label>
+                                        <InputText id="sourceReference" class="form-control" @bind-Value="listDto.SourceReference" />
+                                        <div class="form-text">Reference ID or external identifier</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="tags" class="form-label">Tags</label>
+                                        <InputText id="tags" class="form-control" @bind-Value="listDto.Tags" />
+                                        <div class="form-text">Comma-separated tags for organization</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="isActive" class="form-check-input" @bind-Value="listDto.IsActive" />
+                                        <label for="isActive" class="form-check-label">
+                                            List is Active
                                         </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="expirationDate" class="form-label">Expiration Date</label>
+                                        <InputDate id="expirationDate" class="form-control" @bind-Value="listDto.ExpirationDate" />
+                                        <div class="form-text">Optional expiration date for the list</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
-                                    <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="listDto.MaxCallAttempts" min="1" max="10" />
-                                    <ValidationMessage For="@(() => listDto.MaxCallAttempts)" />
-                                    <div class="form-text">Leave empty to use campaign setting</div>
+                        <!-- Calling Rules Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "calling" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Calling Rules & Overrides</h5>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="maxCallAttempts" class="form-label">Max Call Attempts</label>
+                                        <InputNumber id="maxCallAttempts" class="form-control" @bind-Value="listDto.MaxCallAttempts" min="1" max="20" />
+                                        <div class="form-text">Override campaign setting (leave empty for default)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="minCallInterval" class="form-label">Min Call Interval (min)</label>
+                                        <InputNumber id="minCallInterval" class="form-control" @bind-Value="listDto.MinCallInterval" min="1" max="10080" />
+                                        <div class="form-text">Override campaign setting (leave empty for default)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="duplicateCheckMethod" class="form-label">Duplicate Check Method</label>
+                                        <InputSelect id="duplicateCheckMethod" class="form-select" @bind-Value="listDto.DuplicateCheckMethod">
+                                            <option value="PHONE">Phone Number</option>
+                                            <option value="EMAIL">Email Address</option>
+                                            <option value="PHONE_EMAIL">Phone and Email</option>
+                                            <option value="CUSTOM">Custom Field</option>
+                                            <option value="NONE">No Duplicate Check</option>
+                                        </InputSelect>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="minCallInterval" class="form-label">Min Call Interval (minutes)</label>
-                                    <InputNumber id="minCallInterval" class="form-control" @bind-Value="listDto.MinCallInterval" min="1" max="1440" />
-                                    <ValidationMessage For="@(() => listDto.MinCallInterval)" />
-                                    <div class="form-text">Leave empty to use campaign setting</div>
+
+                            <h6 class="mt-4 mb-3">Time Zone & Calling Hours Override</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="timeZoneOverride" class="form-label">Time Zone Override</label>
+                                        <InputSelect id="timeZoneOverride" class="form-select" @bind-Value="listDto.TimeZoneOverride">
+                                            <option value="">Use Campaign Setting</option>
+                                            <option value="UTC">UTC</option>
+                                            <option value="America/New_York">Eastern Time</option>
+                                            <option value="America/Chicago">Central Time</option>
+                                            <option value="America/Denver">Mountain Time</option>
+                                            <option value="America/Los_Angeles">Pacific Time</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="callStartTimeOverride" class="form-label">Call Start Time</label>
+                                        <InputText id="callStartTimeOverride" class="form-control" @bind-Value="listDto.CallStartTimeOverride" />
+                                        <div class="form-text">Format: HH:MM (24-hour)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="callEndTimeOverride" class="form-label">Call End Time</label>
+                                        <InputText id="callEndTimeOverride" class="form-control" @bind-Value="listDto.CallEndTimeOverride" />
+                                        <div class="form-text">Format: HH:MM (24-hour)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="timezoneMethod" class="form-label">Timezone Method</label>
+                                        <InputSelect id="timezoneMethod" class="form-select" @bind-Value="listDto.TimezoneMethod">
+                                            <option value="COUNTRY_AND_AREA_CODE">Country & Area Code</option>
+                                            <option value="POSTAL_CODE">Postal Code</option>
+                                            <option value="OWNER_TIME_ZONE_CODE">Owner Timezone</option>
+                                            <option value="PHONE_CODE">Phone Code</option>
+                                        </InputSelect>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="allowedDaysOverride" class="form-label">Allowed Days Override</label>
+                                        <InputText id="allowedDaysOverride" class="form-control" @bind-Value="listDto.AllowedDaysOverride" />
+                                        <div class="form-text">Comma-separated: Monday,Tuesday,Wednesday,Thursday,Friday</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="localCallTime" class="form-label">Local Call Time</label>
+                                        <InputText id="localCallTime" class="form-control" @bind-Value="listDto.LocalCallTime" />
+                                        <div class="form-text">Local calling time rules</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <InputCheckbox id="isActive" class="form-check-input" @bind-Value="listDto.IsActive" />
-                                <label class="form-check-label" for="isActive">
-                                    Active
-                                </label>
+                        <!-- Advanced Features Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "advanced" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Advanced Features</h5>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="scriptId" class="form-label">Script ID</label>
+                                        <InputText id="scriptId" class="form-control" @bind-Value="listDto.ScriptId" />
+                                        <div class="form-text">Agent script override for this list</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="campaignCallerIdOverride" class="form-label">Caller ID Override</label>
+                                        <InputText id="campaignCallerIdOverride" class="form-control" @bind-Value="listDto.CampaignCallerIdOverride" />
+                                        <div class="form-text">Override campaign caller ID for this list</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="customFieldsCopy" class="form-check-input" @bind-Value="listDto.CustomFieldsCopy" />
+                                        <label for="customFieldsCopy" class="form-check-label">
+                                            Allow Custom Fields Copy
+                                        </label>
+                                        <div class="form-text">Allow copying custom fields between leads</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="customFieldsModify" class="form-check-input" @bind-Value="listDto.CustomFieldsModify" />
+                                        <label for="customFieldsModify" class="form-check-label">
+                                            Allow Custom Fields Modify
+                                        </label>
+                                        <div class="form-text">Allow agents to modify custom fields</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <InputCheckbox id="resetLeadCalledCount" class="form-check-input" @bind-Value="listDto.ResetLeadCalledCount" />
+                                        <label for="resetLeadCalledCount" class="form-check-label">
+                                            Reset Lead Called Count
+                                        </label>
+                                        <div class="form-text">Reset call count when recycling leads</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="resetTime" class="form-label">Reset Time</label>
+                                        <InputText id="resetTime" class="form-control" @bind-Value="listDto.ResetTime" />
+                                        <div class="form-text">Daily reset time (HH:MM format)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="answeringMachineMessage" class="form-label">Answering Machine Message</label>
+                                        <InputText id="answeringMachineMessage" class="form-control" @bind-Value="listDto.AnsweringMachineMessage" />
+                                        <div class="form-text">Custom AMD message for this list</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="dropInGroup" class="form-label">Drop In Group</label>
+                                        <InputText id="dropInGroup" class="form-control" @bind-Value="listDto.DropInGroup" />
+                                        <div class="form-text">Group for dropped calls</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="phoneValidationSettings" class="form-label">Phone Validation Settings</label>
+                                <InputTextArea id="phoneValidationSettings" class="form-control" rows="3" @bind-Value="listDto.PhoneValidationSettings" />
+                                <div class="form-text">JSON configuration for phone validation rules</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="customFieldsSchema" class="form-label">Custom Fields Schema</label>
+                                <InputTextArea id="customFieldsSchema" class="form-control" rows="4" @bind-Value="listDto.CustomFieldsSchema" />
+                                <div class="form-text">JSON configuration for custom fields schema</div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="customFieldsSchema" class="form-label">Custom Fields Schema (JSON)</label>
-                            <InputTextArea id="customFieldsSchema" class="form-control" rows="4" @bind-Value="listDto.CustomFieldsSchema" />
-                            <ValidationMessage For="@(() => listDto.CustomFieldsSchema)" />
-                            <div class="form-text">JSON configuration for custom fields schema</div>
+                        <!-- Web Forms Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "forms" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Web Form Configuration</h5>
+
+                            <div class="mb-3">
+                                <label for="webFormAddress" class="form-label">Primary Web Form Address</label>
+                                <InputText id="webFormAddress" class="form-control" @bind-Value="listDto.WebFormAddress" />
+                                <div class="form-text">URL for primary web form integration</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="webFormAddress2" class="form-label">Secondary Web Form Address</label>
+                                <InputText id="webFormAddress2" class="form-control" @bind-Value="listDto.WebFormAddress2" />
+                                <div class="form-text">URL for secondary web form integration</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="webFormAddress3" class="form-label">Tertiary Web Form Address</label>
+                                <InputText id="webFormAddress3" class="form-control" @bind-Value="listDto.WebFormAddress3" />
+                                <div class="form-text">URL for tertiary web form integration</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="agentScriptOverride" class="form-label">Agent Script Override</label>
+                                <InputTextArea id="agentScriptOverride" class="form-control" rows="5" @bind-Value="listDto.AgentScriptOverride" />
+                                <div class="form-text">Custom agent script content for this list</div>
+                            </div>
                         </div>
 
-                        <div class="d-flex justify-content-between">
-                            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+                        <!-- Transfer Configuration Tab -->
+                        <div class="tab-content" style="display: @(activeTab == "transfer" ? "block" : "none")">
+                            <h5 class="mb-3 text-primary">Transfer Configuration</h5>
+
+                            <div class="mb-3">
+                                <label for="outboundCallerId" class="form-label">Outbound Caller ID</label>
+                                <InputText id="outboundCallerId" class="form-control" @bind-Value="listDto.OutboundCallerId" />
+                                <div class="form-text">Caller ID for outbound transfers</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="transferConf1" class="form-label">Transfer Conference 1</label>
+                                        <InputText id="transferConf1" class="form-control" @bind-Value="listDto.TransferConf1" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="transferConf2" class="form-label">Transfer Conference 2</label>
+                                        <InputText id="transferConf2" class="form-control" @bind-Value="listDto.TransferConf2" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="transferConf3" class="form-label">Transfer Conference 3</label>
+                                        <InputText id="transferConf3" class="form-control" @bind-Value="listDto.TransferConf3" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="transferConf4" class="form-label">Transfer Conference 4</label>
+                                        <InputText id="transferConf4" class="form-control" @bind-Value="listDto.TransferConf4" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="transferConf5" class="form-label">Transfer Conference 5</label>
+                                <InputText id="transferConf5" class="form-control" @bind-Value="listDto.TransferConf5" />
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
                                 @if (isSubmitting)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                 }
                                 @(IsEditMode ? "Update List" : "Create List")
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">
+                                Cancel
                             </button>
                         </div>
                     </EditForm>
@@ -115,6 +424,7 @@
     private CreateListDto listDto = new CreateListDto();
     private string? errorMessage;
     private bool isSubmitting = false;
+    private string activeTab = "basic";
 
     private bool IsEditMode => ListId.HasValue;
 
@@ -131,10 +441,21 @@
             {
                 Priority = 5,
                 MaxCallAttempts = 3,
-                CallInOrder = true,
-                IsActive = true
+                CallStrategy = "Sequential",
+                IsActive = true,
+                Source = "Manual",
+                ListMixRatio = 1.0m,
+                DuplicateCheckMethod = "PHONE",
+                CustomFieldsModify = true,
+                ResetLeadCalledCount = true,
+                TimezoneMethod = "COUNTRY_AND_AREA_CODE"
             };
         }
+    }
+
+    private void SetActiveTab(string tabName)
+    {
+        activeTab = tabName;
     }
 
     private async Task LoadList()
@@ -144,17 +465,48 @@
             var list = await Http.GetFromJsonAsync<ListDto>($"api/lists/{ListId}");
             if (list != null)
             {
-                // Map to create/update DTO
+                // Map all fields from ListDto to CreateListDto
                 listDto = new CreateListDto
                 {
                     Name = list.Name,
                     Description = list.Description,
                     Priority = list.Priority,
-                    CallInOrder = list.CallInOrder,
+                    CallStrategy = list.CallStrategy,
                     MaxCallAttempts = list.MaxCallAttempts,
                     MinCallInterval = list.MinCallInterval,
+                    TimeZoneOverride = list.TimeZoneOverride,
+                    CallStartTimeOverride = list.CallStartTimeOverride,
+                    CallEndTimeOverride = list.CallEndTimeOverride,
+                    AllowedDaysOverride = list.AllowedDaysOverride,
                     IsActive = list.IsActive,
-                    CustomFieldsSchema = list.CustomFieldsSchema
+                    Source = list.Source,
+                    SourceReference = list.SourceReference,
+                    CustomFieldsSchema = list.CustomFieldsSchema,
+                    Tags = list.Tags,
+                    ScriptId = list.ScriptId,
+                    AgentScriptOverride = list.AgentScriptOverride,
+                    CampaignCallerIdOverride = list.CampaignCallerIdOverride,
+                    ListMixRatio = list.ListMixRatio,
+                    DuplicateCheckMethod = list.DuplicateCheckMethod,
+                    CustomFieldsCopy = list.CustomFieldsCopy,
+                    CustomFieldsModify = list.CustomFieldsModify,
+                    ResetLeadCalledCount = list.ResetLeadCalledCount,
+                    PhoneValidationSettings = list.PhoneValidationSettings,
+                    AnsweringMachineMessage = list.AnsweringMachineMessage,
+                    DropInGroup = list.DropInGroup,
+                    WebFormAddress = list.WebFormAddress,
+                    WebFormAddress2 = list.WebFormAddress2,
+                    WebFormAddress3 = list.WebFormAddress3,
+                    ResetTime = list.ResetTime,
+                    TimezoneMethod = list.TimezoneMethod,
+                    LocalCallTime = list.LocalCallTime,
+                    ExpirationDate = list.ExpirationDate,
+                    OutboundCallerId = list.OutboundCallerId,
+                    TransferConf1 = list.TransferConf1,
+                    TransferConf2 = list.TransferConf2,
+                    TransferConf3 = list.TransferConf3,
+                    TransferConf4 = list.TransferConf4,
+                    TransferConf5 = list.TransferConf5
                 };
             }
         }
@@ -173,17 +525,49 @@
 
             if (IsEditMode)
             {
+                // Map all fields from CreateListDto to UpdateListDto
                 var updateDto = new UpdateListDto
                 {
                     Id = ListId!.Value,
                     Name = listDto.Name,
                     Description = listDto.Description,
                     Priority = listDto.Priority,
-                    CallInOrder = listDto.CallInOrder,
+                    CallStrategy = listDto.CallStrategy,
                     MaxCallAttempts = listDto.MaxCallAttempts,
                     MinCallInterval = listDto.MinCallInterval,
+                    TimeZoneOverride = listDto.TimeZoneOverride,
+                    CallStartTimeOverride = listDto.CallStartTimeOverride,
+                    CallEndTimeOverride = listDto.CallEndTimeOverride,
+                    AllowedDaysOverride = listDto.AllowedDaysOverride,
                     IsActive = listDto.IsActive,
-                    CustomFieldsSchema = listDto.CustomFieldsSchema
+                    Source = listDto.Source,
+                    SourceReference = listDto.SourceReference,
+                    CustomFieldsSchema = listDto.CustomFieldsSchema,
+                    Tags = listDto.Tags,
+                    ScriptId = listDto.ScriptId,
+                    AgentScriptOverride = listDto.AgentScriptOverride,
+                    CampaignCallerIdOverride = listDto.CampaignCallerIdOverride,
+                    ListMixRatio = listDto.ListMixRatio,
+                    DuplicateCheckMethod = listDto.DuplicateCheckMethod,
+                    CustomFieldsCopy = listDto.CustomFieldsCopy,
+                    CustomFieldsModify = listDto.CustomFieldsModify,
+                    ResetLeadCalledCount = listDto.ResetLeadCalledCount,
+                    PhoneValidationSettings = listDto.PhoneValidationSettings,
+                    AnsweringMachineMessage = listDto.AnsweringMachineMessage,
+                    DropInGroup = listDto.DropInGroup,
+                    WebFormAddress = listDto.WebFormAddress,
+                    WebFormAddress2 = listDto.WebFormAddress2,
+                    WebFormAddress3 = listDto.WebFormAddress3,
+                    ResetTime = listDto.ResetTime,
+                    TimezoneMethod = listDto.TimezoneMethod,
+                    LocalCallTime = listDto.LocalCallTime,
+                    ExpirationDate = listDto.ExpirationDate,
+                    OutboundCallerId = listDto.OutboundCallerId,
+                    TransferConf1 = listDto.TransferConf1,
+                    TransferConf2 = listDto.TransferConf2,
+                    TransferConf3 = listDto.TransferConf3,
+                    TransferConf4 = listDto.TransferConf4,
+                    TransferConf5 = listDto.TransferConf5
                 };
 
                 var response = await Http.PutAsJsonAsync($"api/lists/{ListId}", updateDto);

@@ -12,17 +12,19 @@ namespace ProDialer.Functions.Functions;
 
 /// <summary>
 /// Azure Functions for managing lists
-/// Provides CRUD operations and list-specific functionality
+/// Provides CRUD operations and list-specific functionality with comprehensive VICIdial feature support
 /// </summary>
 public class ListFunctions
 {
     private readonly ProDialerDbContext _dbContext;
     private readonly ILogger<ListFunctions> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public ListFunctions(ProDialerDbContext dbContext, ILogger<ListFunctions> logger)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     }
 
     [Function("GetLists")]
@@ -41,8 +43,14 @@ public class ListFunctions
                     Description = l.Description,
                     IsActive = l.IsActive,
                     Priority = l.Priority,
+                    Source = l.Source,
                     CreatedAt = l.CreatedAt,
                     UpdatedAt = l.UpdatedAt,
+                    ListMixRatio = l.ListMixRatio,
+                    DuplicateCheckMethod = l.DuplicateCheckMethod,
+                    ResetsToday = l.ResetsToday,
+                    LastResetAt = l.LastResetAt,
+                    ExpirationDate = l.ExpirationDate,
                     TotalLeads = 0, // Will be calculated separately for performance
                     CalledLeads = 0,
                     ContactedLeads = 0
@@ -85,7 +93,7 @@ public class ListFunctions
                 Name = list.Name,
                 Description = list.Description,
                 Priority = list.Priority,
-                CallInOrder = list.CallInOrder,
+                CallStrategy = list.CallStrategy,
                 MaxCallAttempts = list.MaxCallAttempts,
                 MinCallInterval = list.MinCallInterval,
                 TimeZoneOverride = list.TimeZoneOverride,
@@ -97,13 +105,41 @@ public class ListFunctions
                 SourceReference = list.SourceReference,
                 CustomFieldsSchema = list.CustomFieldsSchema,
                 Tags = list.Tags,
+                ScriptId = list.ScriptId,
+                AgentScriptOverride = list.AgentScriptOverride,
+                CampaignCallerIdOverride = list.CampaignCallerIdOverride,
+                ListMixRatio = list.ListMixRatio,
+                DuplicateCheckMethod = list.DuplicateCheckMethod,
+                CustomFieldsCopy = list.CustomFieldsCopy,
+                CustomFieldsModify = list.CustomFieldsModify,
+                ResetLeadCalledCount = list.ResetLeadCalledCount,
+                PhoneValidationSettings = list.PhoneValidationSettings,
+                ImportExportLog = list.ImportExportLog,
+                PerformanceMetrics = list.PerformanceMetrics,
+                AnsweringMachineMessage = list.AnsweringMachineMessage,
+                DropInGroup = list.DropInGroup,
+                WebFormAddress = list.WebFormAddress,
+                WebFormAddress2 = list.WebFormAddress2,
+                WebFormAddress3 = list.WebFormAddress3,
+                ResetTime = list.ResetTime,
+                TimezoneMethod = list.TimezoneMethod,
+                LocalCallTime = list.LocalCallTime,
+                ExpirationDate = list.ExpirationDate,
+                OutboundCallerId = list.OutboundCallerId,
+                TransferConf1 = list.TransferConf1,
+                TransferConf2 = list.TransferConf2,
+                TransferConf3 = list.TransferConf3,
+                TransferConf4 = list.TransferConf4,
+                TransferConf5 = list.TransferConf5,
+                ResetsToday = list.ResetsToday,
+                LastResetAt = list.LastResetAt,
+                TotalLeads = 0, // Will be calculated separately
+                CalledLeads = 0,
+                ContactedLeads = 0,
                 CreatedAt = list.CreatedAt,
                 UpdatedAt = list.UpdatedAt,
                 CreatedBy = list.CreatedBy,
-                UpdatedBy = list.UpdatedBy,
-                TotalLeads = 0, // Will be calculated separately
-                CalledLeads = 0,
-                ContactedLeads = 0
+                UpdatedBy = list.UpdatedBy
             };
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -127,7 +163,7 @@ public class ListFunctions
             _logger.LogInformation("Creating new list");
 
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var createDto = JsonSerializer.Deserialize<CreateListDto>(requestBody);
+            var createDto = JsonSerializer.Deserialize<CreateListDto>(requestBody, _jsonOptions);
 
             if (createDto == null)
             {
@@ -141,7 +177,7 @@ public class ListFunctions
                 Name = createDto.Name,
                 Description = createDto.Description,
                 Priority = createDto.Priority,
-                CallInOrder = createDto.CallInOrder,
+                CallStrategy = createDto.CallStrategy,
                 MaxCallAttempts = createDto.MaxCallAttempts,
                 MinCallInterval = createDto.MinCallInterval,
                 TimeZoneOverride = createDto.TimeZoneOverride,
@@ -168,7 +204,7 @@ public class ListFunctions
                 Name = list.Name,
                 Description = list.Description,
                 Priority = list.Priority,
-                CallInOrder = list.CallInOrder,
+                CallStrategy = list.CallStrategy,
                 MaxCallAttempts = list.MaxCallAttempts,
                 MinCallInterval = list.MinCallInterval,
                 TimeZoneOverride = list.TimeZoneOverride,
@@ -233,7 +269,7 @@ public class ListFunctions
             list.Name = updateDto.Name;
             list.Description = updateDto.Description;
             list.Priority = updateDto.Priority;
-            list.CallInOrder = updateDto.CallInOrder;
+            list.CallStrategy = updateDto.CallStrategy;
             list.MaxCallAttempts = updateDto.MaxCallAttempts;
             list.MinCallInterval = updateDto.MinCallInterval;
             list.TimeZoneOverride = updateDto.TimeZoneOverride;
@@ -256,7 +292,7 @@ public class ListFunctions
                 Name = list.Name,
                 Description = list.Description,
                 Priority = list.Priority,
-                CallInOrder = list.CallInOrder,
+                CallStrategy = list.CallStrategy,
                 MaxCallAttempts = list.MaxCallAttempts,
                 MinCallInterval = list.MinCallInterval,
                 TimeZoneOverride = list.TimeZoneOverride,

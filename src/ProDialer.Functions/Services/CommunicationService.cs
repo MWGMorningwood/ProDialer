@@ -1,3 +1,5 @@
+using Azure.Communication.CallAutomation;
+using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +14,7 @@ public class CommunicationService
 {
     private readonly ILogger<CommunicationService> _logger;
     private readonly CommunicationServiceOptions _options;
+    private readonly CallAutomationClient _callAutomationClient;
 
     public CommunicationService(
         IOptions<CommunicationServiceOptions> options,
@@ -19,6 +22,29 @@ public class CommunicationService
     {
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        
+        // Initialize CallAutomationClient with managed identity or connection string
+        _callAutomationClient = InitializeCallAutomationClient();
+    }
+
+    private CallAutomationClient InitializeCallAutomationClient()
+    {
+        if (!string.IsNullOrEmpty(_options.ConnectionString))
+        {
+            // Use connection string for local development
+            _logger.LogInformation("Initializing Azure Communication Services with connection string");
+            return new CallAutomationClient(_options.ConnectionString);
+        }
+        
+        if (!string.IsNullOrEmpty(_options.Endpoint))
+        {
+            // Use managed identity for Azure deployment
+            _logger.LogInformation("Initializing Azure Communication Services with managed identity");
+            var endpoint = new Uri(_options.Endpoint);
+            return new CallAutomationClient(endpoint, new DefaultAzureCredential());
+        }
+        
+        throw new InvalidOperationException("Either CommunicationService:ConnectionString or CommunicationService:Endpoint must be configured.");
     }
 
     /// <summary>
@@ -190,6 +216,16 @@ public class CommunicationService
 public class CommunicationServiceOptions
 {
     public const string SectionName = "CommunicationService";
+
+    /// <summary>
+    /// The connection string for Azure Communication Services (for local development)
+    /// </summary>
+    public string? ConnectionString { get; set; }
+
+    /// <summary>
+    /// The endpoint URL for Azure Communication Services (for managed identity)
+    /// </summary>
+    public string? Endpoint { get; set; }
 
     /// <summary>
     /// The phone number assigned to your ACS resource for outbound calling

@@ -92,7 +92,8 @@ module functionApp './core/host/functions.bicep' = {
     storageAccountName: storage.outputs.name
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     communicationServiceName: communication.outputs.name
-    sqlConnectionString: database.outputs.connectionString
+    sqlServerName: database.outputs.serverName
+    sqlDatabaseName: database.outputs.databaseName
   }
 }
 
@@ -103,6 +104,16 @@ module staticWebApp './core/host/staticwebapp.bicep' = {
     tags: tags
     name: !empty(staticWebAppName) ? staticWebAppName : '${abbrs.webStaticSites}${resourceToken}'
     functionAppName: functionApp.outputs.name
+  }
+}
+
+// Set up RBAC permissions for managed identity
+module roleAssignments './core/security/role-assignments.bicep' = {
+  name: 'role-assignments'
+  params: {
+    functionAppPrincipalId: functionApp.outputs.identityPrincipalId
+    storageAccountName: storage.outputs.name
+    communicationServiceName: communication.outputs.name
   }
 }
 

@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ProDialer.Functions Debug",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:azureFunctions.pickProcess}"
+        },
+        {
+            "name": "ProDialer.Web Debug",
+            "type": "blazorwasm",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/src/ProDialer.Web"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch All",
+            "configurations": [
+                "ProDialer.Web Debug",
+                "ProDialer.Functions Debug"
+            ]
+        }
+    ]
+}

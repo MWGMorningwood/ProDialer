@@ -16,8 +16,11 @@ param applicationInsightsName string
 @description('The name of the Communication Service')
 param communicationServiceName string
 
-@description('SQL connection string')
-param sqlConnectionString string
+@description('SQL Server name for managed identity connection')
+param sqlServerName string
+
+@description('SQL Database name for managed identity connection')
+param sqlDatabaseName string
 
 var abbrs = loadJsonContent('../../abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, resourceGroup().id))
@@ -86,16 +89,19 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: 'dotnet-isolated'
         }
         {
-          name: 'COMMUNICATION_SERVICE_CONNECTION_STRING'
-          value: communicationService.listKeys().primaryConnectionString
+          name: 'Azure__StorageAccountName'
+          value: storageAccount.name
         }
         {
-          name: 'SQL_CONNECTION_STRING'
-          value: sqlConnectionString
+          name: 'CommunicationService__Endpoint'
+          value: 'https://${communicationService.name}.communication.azure.com/'
         }
+      ]
+      connectionStrings: [
         {
-          name: 'TABLE_STORAGE_CONNECTION_STRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
+          name: 'DefaultConnection'
+          connectionString: 'Server=tcp:${sqlServerName}${environment().suffixes.sqlServerHostname},1433;Initial Catalog=${sqlDatabaseName};Encrypt=True;Connection Timeout=30;Authentication=Active Directory Default;'
+          type: 'SQLAzure'
         }
       ]
       ftpsState: 'FtpsOnly'

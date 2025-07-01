@@ -145,8 +145,8 @@ public class Agent
     /// </summary>
     public string? CustomFields { get; set; }
     
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     
     [StringLength(100)]
     public string CreatedBy { get; set; } = string.Empty;

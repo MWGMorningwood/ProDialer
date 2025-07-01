@@ -111,9 +111,9 @@
                                                     <div class="status-indicator me-2 @GetStatusIndicatorClass(agent.Status)"></div>
                                                     <div>
                                                         <strong>@agent.FirstName @agent.LastName</strong>
-                                                        @if (!string.IsNullOrEmpty(agent.Department))
+                                                        @if (!string.IsNullOrEmpty(agent.Role))
                                                         {
-                                                            <br /><small class="text-muted">@agent.Department</small>
+                                                            <br /><small class="text-muted">@agent.Role</small>
                                                         }
                                                     </div>
                                                 </div>
@@ -124,7 +124,7 @@
                                                     <a href="mailto:@agent.Email">@agent.Email</a>
                                                 }
                                             </td>
-                                            <td>@(agent.Phone ?? "N/A")</td>
+                                            <td>@(agent.PhoneNumber ?? "N/A")</td>
                                             <td>
                                                 <span class="badge @GetStatusBadgeClass(agent.Status)">@agent.Status</span>
                                             </td>
@@ -133,9 +133,9 @@
                                             </td>
                                             <td>@agent.TotalCalls</td>
                                             <td>
-                                                @if (agent.LastLoginAt.HasValue)
+                                                @if (agent.LastLoggedOutAt.HasValue)
                                                 {
-                                                    @agent.LastLoginAt.Value.ToString("MM/dd/yyyy HH:mm")
+                                                    @agent.LastLoggedOutAt.Value.ToString("MM/dd/yyyy HH:mm")
                                                 }
                                                 else
                                                 {

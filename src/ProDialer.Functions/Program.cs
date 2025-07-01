@@ -32,16 +32,27 @@ builder.Services.AddDbContext<ProDialerDbContext>(options =>
     });
 });
 
-// Configure Azure Table Storage
+// Configure Azure Table Storage with Managed Identity
 builder.Services.AddSingleton<TableServiceClient>(serviceProvider =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("Storage");
-    if (string.IsNullOrEmpty(connectionString))
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var storageAccountName = configuration["Azure:StorageAccountName"];
+    
+    if (string.IsNullOrEmpty(storageAccountName))
     {
-        throw new InvalidOperationException("Storage connection string is not configured.");
+        // Fallback to connection string for local development
+        var connectionString = configuration.GetConnectionString("Storage");
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            return new TableServiceClient(connectionString);
+        }
+        
+        throw new InvalidOperationException("Either Azure:StorageAccountName or Storage connection string must be configured.");
     }
     
-    return new TableServiceClient(connectionString);
+    // Use managed identity for Azure deployment
+    var serviceUri = new Uri($"https://{storageAccountName}.table.core.windows.net");
+    return new TableServiceClient(serviceUri, new DefaultAzureCredential());
 });
 
 // Register custom services

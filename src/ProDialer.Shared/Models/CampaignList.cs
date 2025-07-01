@@ -38,7 +38,7 @@ public class CampaignList
     /// <summary>
     /// When this list was added to the campaign
     /// </summary>
-    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+    public DateTime AddedAt { get; set; }
     
     /// <summary>
     /// Who added this list to the campaign

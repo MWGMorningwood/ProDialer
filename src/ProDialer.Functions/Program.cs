@@ -58,6 +58,7 @@ builder.Services.AddSingleton<TableServiceClient>(serviceProvider =>
 // Register custom services
 builder.Services.AddScoped<CommunicationService>();
 builder.Services.AddScoped<TableStorageService>();
+builder.Services.AddScoped<LeadFilteringService>();
 
 // Configure Communication Service options
 builder.Services.Configure<CommunicationServiceOptions>(

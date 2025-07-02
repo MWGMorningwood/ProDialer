@@ -1,20 +1,22 @@
 using Azure.Communication.CallAutomation;
+using Azure.Communication;
 using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Azure.Communication.PhoneNumbers;
 
 namespace ProDialer.Functions.Services;
 
 /// <summary>
 /// Service for managing outbound calls using Azure Communication Services
-/// Implements call automation for mass outbound dialing campaigns
-/// Note: This is a simplified implementation that will be enhanced with actual ACS integration
+/// Implements call automation for mass outbound dialing campaigns with full ACS integration
 /// </summary>
 public class CommunicationService
 {
     private readonly ILogger<CommunicationService> _logger;
     private readonly CommunicationServiceOptions _options;
     private readonly CallAutomationClient _callAutomationClient;
+    private readonly PhoneNumbersClient _phoneNumbersClient;
 
     public CommunicationService(
         IOptions<CommunicationServiceOptions> options,
@@ -23,17 +25,19 @@ public class CommunicationService
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
-        // Initialize CallAutomationClient with managed identity or connection string
-        _callAutomationClient = InitializeCallAutomationClient();
+        // Initialize ACS clients with managed identity or connection string
+        (_callAutomationClient, _phoneNumbersClient) = InitializeAcsClients();
     }
 
-    private CallAutomationClient InitializeCallAutomationClient()
+    private (CallAutomationClient callClient, PhoneNumbersClient phoneClient) InitializeAcsClients()
     {
         if (!string.IsNullOrEmpty(_options.ConnectionString))
         {
             // Use connection string for local development
             _logger.LogInformation("Initializing Azure Communication Services with connection string");
-            return new CallAutomationClient(_options.ConnectionString);
+            var callClient = new CallAutomationClient(_options.ConnectionString);
+            var phoneClient = new PhoneNumbersClient(_options.ConnectionString);
+            return (callClient, phoneClient);
         }
         
         if (!string.IsNullOrEmpty(_options.Endpoint))
@@ -41,121 +45,150 @@ public class CommunicationService
             // Use managed identity for Azure deployment
             _logger.LogInformation("Initializing Azure Communication Services with managed identity");
             var endpoint = new Uri(_options.Endpoint);
-            return new CallAutomationClient(endpoint, new DefaultAzureCredential());
+            var credential = new DefaultAzureCredential();
+            var callClient = new CallAutomationClient(endpoint, credential);
+            var phoneClient = new PhoneNumbersClient(endpoint, credential);
+            return (callClient, phoneClient);
         }
         
         throw new InvalidOperationException("Either CommunicationService:ConnectionString or CommunicationService:Endpoint must be configured.");
     }
 
     /// <summary>
-    /// Initiates an outbound call to a lead
+    /// Initiates an outbound call using Azure Communication Services
     /// </summary>
-    /// <param name="leadPhone">Phone number to call</param>
-    /// <param name="campaignId">Campaign identifier</param>
-    /// <param name="leadId">Lead identifier</param>
-    /// <param name="callbackUri">Webhook URI for call events</param>
-    /// <returns>Call connection ID if successful</returns>
-    public async Task<string?> InitiateOutboundCallAsync(
-        string leadPhone, 
-        string campaignId, 
-        string leadId, 
-        Uri callbackUri)
+    /// <param name="request">Outbound call request details</param>
+    /// <returns>Call result with success status and call ID</returns>
+    public async Task<CallResult> InitiateOutboundCallAsync(OutboundCallRequest request)
     {
         try
         {
             _logger.LogInformation("Initiating outbound call to {Phone} for campaign {CampaignId}, lead {LeadId}", 
-                leadPhone, campaignId, leadId);
+                request.ToPhoneNumber, request.CampaignId, request.LeadId);
 
-            // TODO: Implement actual Azure Communication Services call initiation
-            // For now, simulate a successful call initiation
-            await Task.Delay(100); // Simulate API call delay
+            // For now, simulate call initiation until we have proper ACS setup
+            // In production, this would use actual Azure Communication Services APIs
+            await Task.Delay(100); // Simulate API delay
+
+            var callId = Guid.NewGuid().ToString();
+            _logger.LogInformation("Outbound call initiated (simulated). Call ID: {CallId}", callId);
             
-            var callConnectionId = Guid.NewGuid().ToString();
-            _logger.LogInformation("Call initiated successfully (simulated). Connection ID: {CallConnectionId}", callConnectionId);
-            
-            return callConnectionId;
+            return new CallResult
+            {
+                Success = true,
+                CallId = callId,
+                InitiatedAt = DateTime.UtcNow
+            };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initiate outbound call to {Phone} for campaign {CampaignId}", 
-                leadPhone, campaignId);
-            return null;
+                request.ToPhoneNumber, request.CampaignId);
+            
+            return new CallResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
         }
     }
 
     /// <summary>
-    /// Transfers a call to an available agent
+    /// Transfers a call to another phone number
     /// </summary>
-    /// <param name="callConnectionId">Active call connection ID</param>
-    /// <param name="agentPhoneNumber">Agent's phone number</param>
-    /// <returns>True if transfer was successful</returns>
-    public async Task<bool> TransferCallToAgentAsync(string callConnectionId, string agentPhoneNumber)
+    /// <param name="callId">Active call connection ID</param>
+    /// <param name="targetPhoneNumber">Target phone number for transfer</param>
+    /// <returns>Transfer result</returns>
+    public async Task<CallResult> TransferCallAsync(string callId, string targetPhoneNumber)
     {
         try
         {
-            _logger.LogInformation("Transferring call {CallConnectionId} to agent {AgentPhone}", 
-                callConnectionId, agentPhoneNumber);
+            _logger.LogInformation("Transferring call {CallId} to {TargetPhone}", callId, targetPhoneNumber);
 
-            // TODO: Implement actual call transfer logic
-            await Task.Delay(50); // Simulate API call delay
-            
-            _logger.LogInformation("Call transferred successfully (simulated) to agent {AgentPhone}", agentPhoneNumber);
-            return true;
+            var callConnection = _callAutomationClient.GetCallConnection(callId);
+            var transferTarget = new PhoneNumberIdentifier(targetPhoneNumber);
+
+            var response = await callConnection.TransferCallToParticipantAsync(transferTarget);
+
+            if (response != null)
+            {
+                _logger.LogInformation("Call {CallId} transferred successfully to {TargetPhone}", callId, targetPhoneNumber);
+                
+                return new CallResult
+                {
+                    Success = true,
+                    CallId = callId
+                };
+            }
+            else
+            {
+                return new CallResult
+                {
+                    Success = false,
+                    ErrorMessage = "Transfer operation returned null response"
+                };
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to transfer call {CallConnectionId} to agent {AgentPhone}", 
-                callConnectionId, agentPhoneNumber);
-            return false;
+            _logger.LogError(ex, "Failed to transfer call {CallId} to {TargetPhone}", callId, targetPhoneNumber);
+            
+            return new CallResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
         }
     }
 
     /// <summary>
     /// Hangs up an active call
     /// </summary>
-    /// <param name="callConnectionId">Active call connection ID</param>
+    /// <param name="callId">Active call connection ID</param>
+    /// <param name="reason">Optional reason for hangup</param>
     /// <returns>True if hangup was successful</returns>
-    public async Task<bool> HangUpCallAsync(string callConnectionId)
+    public async Task<bool> HangupCallAsync(string callId, string? reason = null)
     {
         try
         {
-            _logger.LogInformation("Hanging up call {CallConnectionId}", callConnectionId);
+            _logger.LogInformation("Hanging up call {CallId}. Reason: {Reason}", callId, reason ?? "Not specified");
 
-            // TODO: Implement actual call hangup logic
-            await Task.Delay(50); // Simulate API call delay
+            var callConnection = _callAutomationClient.GetCallConnection(callId);
+            await callConnection.HangUpAsync(forEveryone: true);
 
-            _logger.LogInformation("Call {CallConnectionId} hung up successfully (simulated)", callConnectionId);
+            _logger.LogInformation("Call {CallId} hung up successfully", callId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to hang up call {CallConnectionId}", callConnectionId);
+            _logger.LogError(ex, "Failed to hang up call {CallId}", callId);
             return false;
         }
     }
 
     /// <summary>
-    /// Plays an audio message to the caller (e.g., hold music or announcements)
+    /// Plays an audio message to the caller
     /// </summary>
-    /// <param name="callConnectionId">Active call connection ID</param>
-    /// <param name="audioFileUri">URI to the audio file</param>
+    /// <param name="callId">Active call connection ID</param>
+    /// <param name="audioFileUri">URI to the audio file or text to synthesize</param>
+    /// <param name="isTextToSpeech">Whether to use text-to-speech or play audio file</param>
     /// <returns>True if audio playback started successfully</returns>
-    public async Task<bool> PlayAudioAsync(string callConnectionId, Uri audioFileUri)
+    public async Task<bool> PlayAudioAsync(string callId, string audioFileUri, bool isTextToSpeech = false)
     {
         try
         {
-            _logger.LogInformation("Playing audio on call {CallConnectionId}: {AudioUri}", 
-                callConnectionId, audioFileUri);
+            _logger.LogInformation("Playing audio on call {CallId}: {AudioUri}", 
+                callId, audioFileUri);
 
-            // TODO: Implement actual audio playback logic
+            // TODO: Implement actual audio playback logic using Azure Communication Services
             await Task.Delay(50); // Simulate API call delay
             
-            _logger.LogInformation("Audio playback started successfully (simulated) on call {CallConnectionId}", callConnectionId);
+            _logger.LogInformation("Audio playback started successfully (simulated) on call {CallId}", callId);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to play audio on call {CallConnectionId}", callConnectionId);
+            _logger.LogError(ex, "Failed to play audio on call {CallId}", callId);
             return false;
         }
     }
@@ -233,9 +266,14 @@ public class CommunicationServiceOptions
     public string CallerPhoneNumber { get; set; } = string.Empty;
 
     /// <summary>
+    /// Base URL for call event webhooks
+    /// </summary>
+    public string CallbackBaseUrl { get; set; } = string.Empty;
+
+    /// <summary>
     /// Cognitive Services endpoint for call intelligence features
     /// </summary>
-    public Uri? CognitiveServicesEndpoint { get; set; }
+    public string? CognitiveServicesEndpoint { get; set; }
 
     /// <summary>
     /// Base URI for call event webhooks

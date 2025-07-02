@@ -321,6 +321,144 @@ public class LeadFilteringService
 
         return defaultDelay;
     }
+
+    /// <summary>
+    /// Updates lead quality scores based on validation results and call history
+    /// </summary>
+    /// <param name="campaignId">Campaign to update quality scores for</param>
+    /// <returns>Number of leads updated</returns>
+    public async Task<int> UpdateLeadQualityScoresAsync(int campaignId)
+    {
+        try
+        {
+            var campaign = await _context.Campaigns.FindAsync(campaignId);
+            if (campaign == null)
+            {
+                _logger.LogWarning("Campaign {CampaignId} not found for quality score update", campaignId);
+                return 0;
+            }
+
+            var listIds = await _context.CampaignLists
+                .Where(cl => cl.CampaignId == campaignId)
+                .Select(cl => cl.ListId)
+                .ToListAsync();
+
+            if (!listIds.Any())
+            {
+                _logger.LogInformation("No lists found for campaign {CampaignId}", campaignId);
+                return 0;
+            }
+
+            var leads = await _context.Leads
+                .Where(l => listIds.Contains(l.ListId))
+                .ToListAsync();
+
+            int updatedCount = 0;
+
+            foreach (var lead in leads)
+            {
+                var oldScore = lead.QualityScore;
+                var newScore = await CalculateLeadQualityScore(lead);
+
+                if (newScore != oldScore)
+                {
+                    lead.QualityScore = newScore;
+                    lead.ModifyDate = DateTime.UtcNow;
+                    updatedCount++;
+                }
+            }
+
+            if (updatedCount > 0)
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Updated quality scores for {UpdatedCount} leads in campaign {CampaignId}", 
+                    updatedCount, campaignId);
+            }
+
+            return updatedCount;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating lead quality scores for campaign {CampaignId}", campaignId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Calculates quality score for a lead based on various factors
+    /// </summary>
+    /// <param name="lead">Lead to calculate score for</param>
+    /// <returns>Quality score (0-100)</returns>
+    private async Task<int> CalculateLeadQualityScore(Lead lead)
+    {
+        int score = 50; // Base score
+
+        // Phone validation score (20 points max)
+        if (lead.PhoneValidationStatus == "VALID")
+        {
+            score += 20;
+        }
+        else if (lead.PhoneValidationStatus == "INVALID")
+        {
+            score -= 10;
+        }
+
+        // Mobile number bonus (5 points)
+        if (lead.PhoneType == "MOBILE")
+        {
+            score += 5;
+        }
+
+        // Call history analysis (25 points max)
+        var callLogs = await _context.CallLogs
+            .Where(cl => cl.LeadId == lead.Id)
+            .OrderByDescending(cl => cl.StartedAt)
+            .Take(10)
+            .ToListAsync();
+
+        if (callLogs.Any())
+        {
+            var answeredCalls = callLogs.Count(cl => cl.CallStatus == "ANSWERED");
+            var totalCalls = callLogs.Count;
+            var answerRate = (double)answeredCalls / totalCalls;
+
+            // Higher answer rate = higher score
+            score += (int)(answerRate * 25);
+
+            // Recent activity bonus
+            var lastCall = callLogs.First().StartedAt;
+            var daysSinceLastCall = (DateTime.UtcNow - lastCall).TotalDays;
+            
+            if (daysSinceLastCall <= 7)
+                score += 5; // Recent contact bonus
+            else if (daysSinceLastCall <= 30)
+                score += 2;
+        }
+
+        // Exclusion penalties
+        if (lead.IsExcluded == true)
+            score -= 30;
+        
+        if (lead.IsExcluded == true)
+            score -= 50;
+
+        // Timezone validation bonus (5 points)
+        if (!string.IsNullOrEmpty(lead.TimeZone))
+            score += 5;
+
+        // Ensure score is within valid range
+        return Math.Max(0, Math.Min(100, score));
+    }
+
+    /// <summary>
+    /// Alias method for compatibility with BackgroundProcessingFunctions
+    /// </summary>
+    /// <param name="campaignId">Campaign ID to recycle leads for</param>
+    /// <returns>Number of leads recycled</returns>
+    public async Task<int> RecycleLeadsAsync(int campaignId)
+    {
+        return await ProcessLeadRecyclingAsync(campaignId);
+    }
 }
 
 /// <summary>

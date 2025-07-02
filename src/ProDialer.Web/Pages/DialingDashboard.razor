@@ -1,0 +1,827 @@
+@page "/dialing"
+@using ProDialer.Shared.DTOs
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Dialing Dashboard - ProDialer</PageTitle>
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">Dialing Dashboard</h2>
+                    <p class="text-muted mb-0">Real-time campaign monitoring and control</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success" @onclick="StartAllCampaigns" disabled="@isProcessing">
+                        <i class="fas fa-play"></i> Start All Campaigns
+                    </button>
+                    <button class="btn btn-warning" @onclick="PauseAllCampaigns" disabled="@isProcessing">
+                        <i class="fas fa-pause"></i> Pause All
+                    </button>
+                    <button class="btn btn-danger" @onclick="StopAllCampaigns" disabled="@isProcessing">
+                        <i class="fas fa-stop"></i> Stop All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">Active Campaigns</h6>
+                            <h3 class="mb-0">@(statistics?.ActiveCampaigns ?? 0)</h3>
+                        </div>
+                        <i class="fas fa-bullhorn fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">Available Agents</h6>
+                            <h3 class="mb-0">@(statistics?.AvailableAgents ?? 0)</h3>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">Calls Today</h6>
+                            <h3 class="mb-0">@(statistics?.CallsToday ?? 0)</h3>
+                        </div>
+                        <i class="fas fa-phone fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">In Progress</h6>
+                            <h3 class="mb-0">@(statistics?.CallsInProgress ?? 0)</h3>
+                        </div>
+                        <i class="fas fa-phone-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">Answer Rate</h6>
+                            <h3 class="mb-0">@(statistics?.AnswerRateToday.ToString("F1") ?? "0.0")%</h3>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-6 mb-3">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">Ready Leads</h6>
+                            <h3 class="mb-0">@(statistics?.LeadsReadyForCalling ?? 0)</h3>
+                        </div>
+                        <i class="fas fa-list fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link @(activeTab == "campaigns" ? "active" : "")" 
+                                    @onclick="@(() => SetActiveTab("campaigns"))">
+                                <i class="fas fa-bullhorn me-2"></i>Campaign Control
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link @(activeTab == "agents" ? "active" : "")" 
+                                    @onclick="@(() => SetActiveTab("agents"))">
+                                <i class="fas fa-users me-2"></i>Agent Status
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link @(activeTab == "calls" ? "active" : "")" 
+                                    @onclick="@(() => SetActiveTab("calls"))">
+                                <i class="fas fa-phone me-2"></i>Active Calls
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link @(activeTab == "manual" ? "active" : "")" 
+                                    @onclick="@(() => SetActiveTab("manual"))">
+                                <i class="fas fa-phone-square me-2"></i>Manual Dial
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <!-- Campaign Control Tab -->
+                    <div style="display: @(activeTab == "campaigns" ? "block" : "none")">
+                        @if (campaigns != null && campaigns.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Campaign</th>
+                                            <th>Status</th>
+                                            <th>Dial Method</th>
+                                            <th>Assigned Agents</th>
+                                            <th>Calls Today</th>
+                                            <th>Answer Rate</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var campaign in campaigns)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@campaign.Name</strong>
+                                                    <br><small class="text-muted">@campaign.Description</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @GetCampaignStatusBadgeClass(campaign.IsActive)">
+                                                        @(campaign.IsActive ? "Active" : "Inactive")
+                                                    </span>
+                                                </td>
+                                                <td>@campaign.DialMethod</td>
+                                                <td>0</td> <!-- TODO: Get assigned agent count -->
+                                                <td>0</td> <!-- TODO: Get calls today -->
+                                                <td>0.0%</td> <!-- TODO: Get answer rate -->
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        @if (campaign.IsActive)
+                                                        {
+                                                            <button class="btn btn-warning" @onclick="@(() => PauseCampaign(campaign.Id))" disabled="@isProcessing">
+                                                                <i class="fas fa-pause"></i> Pause
+                                                            </button>
+                                                            <button class="btn btn-danger" @onclick="@(() => StopCampaign(campaign.Id))" disabled="@isProcessing">
+                                                                <i class="fas fa-stop"></i> Stop
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn-success" @onclick="@(() => StartCampaign(campaign.Id))" disabled="@isProcessing">
+                                                                <i class="fas fa-play"></i> Start
+                                                            </button>
+                                                        }
+                                                        <button class="btn btn-info" @onclick="@(() => ProcessCampaign(campaign.Id))" disabled="@isProcessing">
+                                                            <i class="fas fa-sync"></i> Process
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                                <h5>No Campaigns Found</h5>
+                                <p class="text-muted">Create a campaign to start dialing.</p>
+                                <a href="/campaigns/create" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Campaign
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Agent Status Tab -->
+                    <div style="display: @(activeTab == "agents" ? "block" : "none")">
+                        @if (agents != null && agents.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Agent</th>
+                                            <th>Status</th>
+                                            <th>Current Call</th>
+                                            <th>Campaign</th>
+                                            <th>Calls Today</th>
+                                            <th>Talk Time</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var agent in agents)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@agent.Name</strong>
+                                                    <br><small class="text-muted">ID: @agent.Id</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @GetAgentStatusBadgeClass(agent.Status)">
+                                                        @agent.Status
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (agent.Status == "ON_CALL")
+                                                    {
+                                                        <span class="text-success">
+                                                            <i class="fas fa-phone"></i> Active Call
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>@(agent.CurrentCampaignId?.ToString() ?? "-")</td>
+                                                <td>0</td> <!-- TODO: Get calls today -->
+                                                <td>00:00</td> <!-- TODO: Get talk time -->
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        @if (agent.Status == "AVAILABLE")
+                                                        {
+                                                            <button class="btn btn-primary" @onclick="@(() => AssignAgentToCampaign(agent.Id))">
+                                                                <i class="fas fa-user-plus"></i> Assign
+                                                            </button>
+                                                        }
+                                                        else if (agent.Status == "ON_CALL")
+                                                        {
+                                                            <button class="btn btn-warning" @onclick="@(() => HangupAgentCall(agent.Id))">
+                                                                <i class="fas fa-phone-slash"></i> Hangup
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <h5>No Agents Found</h5>
+                                <p class="text-muted">Add agents to start making calls.</p>
+                                <a href="/agents" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Manage Agents
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Active Calls Tab -->
+                    <div style="display: @(activeTab == "calls" ? "block" : "none")">
+                        @if (activeCalls != null && activeCalls.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Call ID</th>
+                                            <th>Agent</th>
+                                            <th>Phone Number</th>
+                                            <th>Status</th>
+                                            <th>Duration</th>
+                                            <th>Campaign</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var call in activeCalls)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <code>@call.CallId</code>
+                                                </td>
+                                                <td>@call.AgentId</td>
+                                                <td>@call.PhoneNumber</td>
+                                                <td>
+                                                    <span class="badge @GetCallStatusBadgeClass(call.CallStatus)">
+                                                        @call.CallStatus
+                                                    </span>
+                                                </td>
+                                                <td>@GetCallDuration(call.StartedAt)</td>
+                                                <td>@call.CampaignId</td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        @if (call.CallStatus == "Connected")
+                                                        {
+                                                            <button class="btn btn-warning" @onclick="@(() => HangupCall(call.CallId))">
+                                                                <i class="fas fa-phone-slash"></i> Hangup
+                                                            </button>
+                                                            <button class="btn btn-info" @onclick="@(() => TransferCall(call.CallId))">
+                                                                <i class="fas fa-exchange-alt"></i> Transfer
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-phone fa-3x text-muted mb-3"></i>
+                                <h5>No Active Calls</h5>
+                                <p class="text-muted">No calls are currently in progress.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Manual Dial Tab -->
+                    <div style="display: @(activeTab == "manual" ? "block" : "none")">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Manual Call</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <EditForm Model="manualCallRequest" OnValidSubmit="MakeManualCall">
+                                            <DataAnnotationsValidator />
+                                            <ValidationSummary class="text-danger" />
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Phone Number</label>
+                                                <InputText @bind-Value="manualCallRequest.PhoneNumber" class="form-control" placeholder="+1234567890" />
+                                                <ValidationMessage For="@(() => manualCallRequest.PhoneNumber)" class="text-danger" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Agent</label>
+                                                <InputSelect @bind-Value="manualCallRequest.AgentId" class="form-select">
+                                                    <option value="">Select Agent</option>
+                                                    @if (agents != null)
+                                                    {
+                                                        @foreach (var agent in agents.Where(a => a.Status == "AVAILABLE"))
+                                                        {
+                                                            <option value="@agent.Id">@agent.Name</option>
+                                                        }
+                                                    }
+                                                </InputSelect>
+                                                <ValidationMessage For="@(() => manualCallRequest.AgentId)" class="text-danger" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Campaign (Optional)</label>
+                                                <InputSelect @bind-Value="manualCallRequest.CampaignId" class="form-select">
+                                                    <option value="">No Campaign</option>
+                                                    @if (campaigns != null)
+                                                    {
+                                                        @foreach (var campaign in campaigns.Where(c => c.IsActive))
+                                                        {
+                                                            <option value="@campaign.Id">@campaign.Name</option>
+                                                        }
+                                                    }
+                                                </InputSelect>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-success w-100" disabled="@isProcessing">
+                                                @if (isProcessing)
+                                                {
+                                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                                }
+                                                <i class="fas fa-phone"></i> Make Call
+                                            </button>
+                                        </EditForm>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Call a Lead</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Search Lead</label>
+                                            <div class="input-group">
+                                                <InputText @bind-Value="leadSearchTerm" class="form-control" placeholder="Search by name, phone, or email..." />
+                                                <button class="btn btn-outline-secondary" @onclick="SearchLeads">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        @if (searchedLeads != null && searchedLeads.Any())
+                                        {
+                                            <div class="list-group">
+                                                @foreach (var lead in searchedLeads.Take(5))
+                                                {
+                                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>@(lead.FirstName + " " + lead.LastName)</strong>
+                                                            <br><small class="text-muted">@lead.PrimaryPhone</small>
+                                                        </div>
+                                                        <button class="btn btn-sm btn-primary" @onclick="@(() => CallLead(lead.Id))">
+                                                            <i class="fas fa-phone"></i> Call
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add necessary styles and scripts -->
+<style>
+    .badge-status-available { background-color: #28a745; }
+    .badge-status-on-call { background-color: #17a2b8; }
+    .badge-status-break { background-color: #ffc107; color: #212529; }
+    .badge-status-offline { background-color: #6c757d; }
+    .badge-call-connected { background-color: #28a745; }
+    .badge-call-ringing { background-color: #17a2b8; }
+    .badge-call-failed { background-color: #dc3545; }
+</style>
+
+@code {
+    private DialingStatisticsDto? statistics;
+    private List<CampaignDto>? campaigns;
+    private List<AgentSummaryDto>? agents;
+    private List<CallLogDto>? activeCalls;
+    private List<LeadDto>? searchedLeads;
+    
+    private string activeTab = "campaigns";
+    private bool isProcessing = false;
+    private string leadSearchTerm = "";
+    
+    private ManualCallRequest manualCallRequest = new();
+    private Timer? refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+        
+        // Set up auto-refresh every 5 seconds
+        refreshTimer = new Timer(async _ => 
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadDashboardData();
+                StateHasChanged();
+            });
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            var tasks = new[]
+            {
+                LoadStatistics(),
+                LoadCampaigns(),
+                LoadAgents(),
+                LoadActiveCalls()
+            };
+            
+            await Task.WhenAll(tasks);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadStatistics()
+    {
+        try
+        {
+            statistics = await Http.GetFromJsonAsync<DialingStatisticsDto>("api/dialing/statistics");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading statistics: {ex.Message}");
+        }
+    }
+
+    private async Task LoadCampaigns()
+    {
+        try
+        {
+            campaigns = await Http.GetFromJsonAsync<List<CampaignDto>>("api/campaigns");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading campaigns: {ex.Message}");
+        }
+    }
+
+    private async Task LoadAgents()
+    {
+        try
+        {
+            agents = await Http.GetFromJsonAsync<List<AgentSummaryDto>>("api/agents");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading agents: {ex.Message}");
+        }
+    }
+
+    private async Task LoadActiveCalls()
+    {
+        try
+        {
+            activeCalls = await Http.GetFromJsonAsync<List<CallLogDto>>("api/dialing/active-calls");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading active calls: {ex.Message}");
+        }
+    }
+
+    // Campaign Control Methods
+    private async Task StartCampaign(int campaignId)
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync($"api/dialing/campaigns/{campaignId}/start", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task PauseCampaign(int campaignId)
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync($"api/dialing/campaigns/{campaignId}/pause", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task StopCampaign(int campaignId)
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync($"api/dialing/campaigns/{campaignId}/stop", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task ProcessCampaign(int campaignId)
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync($"api/dialing/campaigns/{campaignId}/process", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task StartAllCampaigns()
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync("api/dialing/campaigns/start-all", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task PauseAllCampaigns()
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync("api/dialing/campaigns/pause-all", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task StopAllCampaigns()
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync("api/dialing/campaigns/stop-all", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    // Call Control Methods
+    private async Task HangupCall(string? callId)
+    {
+        if (string.IsNullOrEmpty(callId)) return;
+        
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync($"api/dialing/calls/{callId}/hangup", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task TransferCall(string? callId)
+    {
+        if (string.IsNullOrEmpty(callId)) return;
+        
+        var transferNumber = await JSRuntime.InvokeAsync<string>("prompt", "Enter transfer number:");
+        if (!string.IsNullOrEmpty(transferNumber))
+        {
+            await ExecuteWithProcessing(async () =>
+            {
+                var transferRequest = new { transferTo = transferNumber };
+                var response = await Http.PostAsJsonAsync($"api/dialing/calls/{callId}/transfer", transferRequest);
+                response.EnsureSuccessStatusCode();
+                await LoadDashboardData();
+            });
+        }
+    }
+
+    // Agent Methods
+    private async Task AssignAgentToCampaign(int agentId)
+    {
+        var campaignIds = campaigns?.Where(c => c.IsActive).Select(c => c.Id.ToString()).ToArray() ?? new string[0];
+        if (campaignIds.Length == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No active campaigns available.");
+            return;
+        }
+
+        // For now, assign to first active campaign - could be enhanced with a selection dialog
+        var campaignId = int.Parse(campaignIds[0]);
+        
+        await ExecuteWithProcessing(async () =>
+        {
+            var request = new { agentId, campaignId };
+            var response = await Http.PostAsJsonAsync("api/dialing/agents/assign", request);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task HangupAgentCall(int agentId)
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsync($"api/dialing/agents/{agentId}/hangup", null);
+            response.EnsureSuccessStatusCode();
+            await LoadDashboardData();
+        });
+    }
+
+    // Manual Dialing
+    private async Task MakeManualCall()
+    {
+        await ExecuteWithProcessing(async () =>
+        {
+            var response = await Http.PostAsJsonAsync("api/dialing/manual-call", manualCallRequest);
+            response.EnsureSuccessStatusCode();
+            
+            // Reset form
+            manualCallRequest = new ManualCallRequest();
+            await LoadDashboardData();
+        });
+    }
+
+    private async Task SearchLeads()
+    {
+        if (string.IsNullOrWhiteSpace(leadSearchTerm)) return;
+        
+        try
+        {
+            searchedLeads = await Http.GetFromJsonAsync<List<LeadDto>>($"api/leads?search={Uri.EscapeDataString(leadSearchTerm)}&pageSize=5");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching leads: {ex.Message}");
+        }
+    }
+
+    private async Task CallLead(int leadId)
+    {
+        if (agents?.Any(a => a.Status == "AVAILABLE") != true)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No available agents to make the call.");
+            return;
+        }
+
+        var availableAgent = agents.First(a => a.Status == "AVAILABLE");
+        var lead = searchedLeads?.FirstOrDefault(l => l.Id == leadId);
+        
+        if (lead != null)
+        {
+            manualCallRequest.PhoneNumber = lead.PrimaryPhone;
+            manualCallRequest.AgentId = availableAgent.Id.ToString();
+            await MakeManualCall();
+        }
+    }
+
+    // Helper Methods
+    private void SetActiveTab(string tabName)
+    {
+        activeTab = tabName;
+    }
+
+    private async Task ExecuteWithProcessing(Func<Task> action)
+    {
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Operation failed: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Operation failed: {ex.Message}");
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetCampaignStatusBadgeClass(bool isActive)
+    {
+        return isActive ? "badge bg-success" : "badge bg-secondary";
+    }
+
+    private string GetAgentStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "AVAILABLE" => "badge badge-status-available",
+            "ON_CALL" => "badge badge-status-on-call",
+            "BREAK" => "badge badge-status-break",
+            _ => "badge badge-status-offline"
+        };
+    }
+
+    private string GetCallStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Connected" => "badge badge-call-connected",
+            "Ringing" => "badge badge-call-ringing",
+            "Failed" => "badge badge-call-failed",
+            _ => "badge bg-secondary"
+        };
+    }
+
+    private string GetCallDuration(DateTime startTime)
+    {
+        var duration = DateTime.UtcNow - startTime;
+        return $"{duration.Hours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Dispose();
+    }
+
+    // DTOs for manual calling
+    public class ManualCallRequest
+    {
+        public string PhoneNumber { get; set; } = "";
+        public string AgentId { get; set; } = "";
+        public int? CampaignId { get; set; }
+    }
+}

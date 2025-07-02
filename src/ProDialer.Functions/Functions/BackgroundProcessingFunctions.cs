@@ -705,16 +705,21 @@ public class BackgroundProcessingFunctions
                         }
 
                         // Initiate call through Communication Service
-                        var callConnectionId = await _communicationService.InitiateOutboundCallAsync(
-                            lead.PrimaryPhone, 
-                            campaign.Id.ToString(),
-                            lead.Id.ToString(),
-                            new Uri("https://your-webhook-endpoint.com/call-events")); // TODO: Configure webhook endpoint
+                        var callRequest = new OutboundCallRequest
+                        {
+                            ToPhoneNumber = lead.PrimaryPhone,
+                            FromPhoneNumber = "+18005551234", // TODO: Configure from campaign or settings
+                            CampaignId = campaign.Id,
+                            LeadId = lead.Id,
+                            CallLogId = 0 // Will be set after call initiation
+                        };
 
-                        if (!string.IsNullOrEmpty(callConnectionId))
+                        var callResult = await _communicationService.InitiateOutboundCallAsync(callRequest);
+
+                        if (callResult.Success && !string.IsNullOrEmpty(callResult.CallId))
                         {
                             successfulCalls++;
-                            await LogCallAttemptAsync(lead.Id, campaignId, callConnectionId, "Initiated");
+                            await LogCallAttemptAsync(lead.Id, campaignId, callResult.CallId, "Initiated");
                         }
                         else
                         {

@@ -242,7 +242,7 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    <strong>@agent.Name</strong>
+                                                    <strong>@agent.FullName</strong>
                                                     <br><small class="text-muted">ID: @agent.Id</small>
                                                 </td>
                                                 <td>
@@ -262,7 +262,7 @@
                                                         <span class="text-muted">-</span>
                                                     }
                                                 </td>
-                                                <td>@(agent.CurrentCampaignId?.ToString() ?? "-")</td>
+                                                <td>-</td> <!-- No CurrentCampaignId in AgentSummaryDto -->
                                                 <td>0</td> <!-- TODO: Get calls today -->
                                                 <td>00:00</td> <!-- TODO: Get talk time -->
                                                 <td>
@@ -331,7 +331,7 @@
                                                         @call.CallStatus
                                                     </span>
                                                 </td>
-                                                <td>@GetCallDuration(call.StartedAt)</td>
+                                                <td>@GetCallDuration(call.StartedAt ?? DateTime.UtcNow)</td>
                                                 <td>@call.CampaignId</td>
                                                 <td>
                                                     <div class="btn-group btn-group-sm">
@@ -389,7 +389,7 @@
                                                     {
                                                         @foreach (var agent in agents.Where(a => a.Status == "AVAILABLE"))
                                                         {
-                                                            <option value="@agent.Id">@agent.Name</option>
+                                                            <option value="@agent.Id">@agent.FullName</option>
                                                         }
                                                     }
                                                 </InputSelect>

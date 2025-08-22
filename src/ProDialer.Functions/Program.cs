@@ -59,10 +59,15 @@ builder.Services.AddSingleton<TableServiceClient>(serviceProvider =>
 builder.Services.AddScoped<CommunicationService>();
 builder.Services.AddScoped<TableStorageService>();
 builder.Services.AddScoped<LeadFilteringService>();
+builder.Services.AddScoped<TranscriptionService>();
 
 // Configure Communication Service options
 builder.Services.Configure<CommunicationServiceOptions>(
     builder.Configuration.GetSection(CommunicationServiceOptions.SectionName));
+
+// Configure Transcription Service options
+builder.Services.Configure<TranscriptionServiceOptions>(
+    builder.Configuration.GetSection(TranscriptionServiceOptions.SectionName));
 
 builder.Services
     .AddApplicationInsightsTelemetryWorkerService()

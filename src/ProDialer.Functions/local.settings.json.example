@@ -1,0 +1,22 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        
+        "ConnectionStrings:DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ProDialer;Trusted_Connection=true;MultipleActiveResultSets=true",
+        "ConnectionStrings:Storage": "UseDevelopmentStorage=true",
+        
+        "CommunicationService:ConnectionString": "endpoint=https://your-acs-resource.communication.azure.com/;accesskey=your-access-key",
+        "CommunicationService:CallerPhoneNumber": "+1234567890",
+        "CommunicationService:CallbackBaseUrl": "https://your-app.azurewebsites.net",
+        
+        "TranscriptionService:AzureOpenAIEndpoint": "https://your-openai-resource.openai.azure.com/",
+        "TranscriptionService:AzureOpenAIApiKey": "your-azure-openai-api-key-here",
+        "TranscriptionService:WhisperModel": "whisper-1",
+        "TranscriptionService:EnableByDefault": "true",
+        "TranscriptionService:MaxAudioChunkSize": "1048576",
+        "TranscriptionService:MinChunkDuration": "2.0",
+        "TranscriptionService:MaxTranscriptionLength": "10000"
+    }
+}

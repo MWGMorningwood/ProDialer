@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="1.0.0-beta.18" />
     <PackageReference Include="Azure.Communication.CallAutomation" Version="1.3.0" />
     <PackageReference Include="Azure.Communication.Common" Version="1.3.0" />
     <PackageReference Include="Azure.Communication.PhoneNumbers" Version="1.3.0" />

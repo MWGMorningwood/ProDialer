@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProDialer.Functions.Data;
 
@@ -11,9 +12,11 @@ using ProDialer.Functions.Data;
 namespace ProDialer.Functions.Migrations
 {
     [DbContext(typeof(ProDialerDbContext))]
-    partial class ProDialerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250822212717_AddTranscriptionFields")]
+    partial class AddTranscriptionFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

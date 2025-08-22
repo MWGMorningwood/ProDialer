@@ -1,0 +1,40 @@
+# Test live transcription endpoints
+###
+
+# Start transcription for a call
+POST http://localhost:7071/api/transcription/start
+Content-Type: application/json
+
+{
+    "callId": "test-call-123",
+    "language": "en",
+    "enableRealTime": true
+}
+
+###
+
+# Stop transcription (replace {sessionId} with actual session ID from start response)
+POST http://localhost:7071/api/transcription/session-123/stop
+
+###
+
+# Transcribe uploaded audio file
+POST http://localhost:7071/api/transcription/audio?language=en
+Content-Type: audio/wav
+
+# Note: In real usage, this would be binary audio data
+
+###
+
+# Process audio chunk for live transcription
+POST http://localhost:7071/api/transcription/session-123/chunk
+Content-Type: audio/wav
+
+# Note: In real usage, this would be binary audio chunk data
+
+###
+
+# Get transcription settings
+GET http://localhost:7071/api/transcription/settings
+
+###

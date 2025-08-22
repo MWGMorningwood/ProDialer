@@ -237,6 +237,34 @@ public class CallLog
     /// </summary>
     public string? TransferDetails { get; set; }
     
+    /// <summary>
+    /// Whether live transcription was enabled for this call
+    /// </summary>
+    public bool TranscriptionEnabled { get; set; } = false;
+    
+    /// <summary>
+    /// Full transcription text of the call
+    /// </summary>
+    public string? TranscriptionText { get; set; }
+    
+    /// <summary>
+    /// Transcription confidence score (0-1)
+    /// </summary>
+    [Range(0, 1)]
+    public double? TranscriptionConfidence { get; set; }
+    
+    /// <summary>
+    /// Language detected in the transcription
+    /// </summary>
+    [StringLength(10)]
+    public string? TranscriptionLanguage { get; set; }
+    
+    /// <summary>
+    /// Status of transcription processing
+    /// </summary>
+    [StringLength(20)]
+    public string? TranscriptionStatus { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     

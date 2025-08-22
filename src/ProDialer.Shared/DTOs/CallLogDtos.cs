@@ -45,6 +45,11 @@ public class CallLogDto
     public string? ComplianceFlags { get; set; }
     public string? ThreeWayParticipants { get; set; }
     public string? TransferDetails { get; set; }
+    public bool TranscriptionEnabled { get; set; }
+    public string? TranscriptionText { get; set; }
+    public double? TranscriptionConfidence { get; set; }
+    public string? TranscriptionLanguage { get; set; }
+    public string? TranscriptionStatus { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

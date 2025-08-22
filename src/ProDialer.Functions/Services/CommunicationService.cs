@@ -17,13 +17,16 @@ public class CommunicationService
     private readonly CommunicationServiceOptions _options;
     private readonly CallAutomationClient _callAutomationClient;
     private readonly PhoneNumbersClient _phoneNumbersClient;
+    private readonly TranscriptionService _transcriptionService;
 
     public CommunicationService(
         IOptions<CommunicationServiceOptions> options,
-        ILogger<CommunicationService> logger)
+        ILogger<CommunicationService> logger,
+        TranscriptionService transcriptionService)
     {
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _transcriptionService = transcriptionService ?? throw new ArgumentNullException(nameof(transcriptionService));
         
         // Initialize ACS clients with managed identity or connection string
         (_callAutomationClient, _phoneNumbersClient) = InitializeAcsClients();
@@ -239,6 +242,76 @@ public class CommunicationService
         {
             _logger.LogError(ex, "Failed to stop recording {RecordingId}", recordingId);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Starts live transcription for a call
+    /// </summary>
+    /// <param name="callId">Active call connection ID</param>
+    /// <param name="language">Optional language hint for transcription</param>
+    /// <returns>Transcription session ID if successful</returns>
+    public async Task<string?> StartTranscriptionAsync(string callId, string? language = null)
+    {
+        try
+        {
+            _logger.LogInformation("Starting transcription for call {CallId} with language {Language}", 
+                callId, language ?? "auto-detect");
+
+            // In a real implementation, this would:
+            // 1. Set up audio streaming from the call
+            // 2. Start the transcription service
+            // 3. Configure real-time audio processing
+
+            // For now, we simulate the audio stream setup
+            using var audioStream = new MemoryStream(); // Placeholder for real audio stream
+            var sessionId = await _transcriptionService.StartLiveTranscriptionAsync(callId, audioStream);
+
+            if (sessionId != null)
+            {
+                _logger.LogInformation("Transcription started successfully for call {CallId}, session {SessionId}", 
+                    callId, sessionId);
+            }
+
+            return sessionId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to start transcription for call {CallId}", callId);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Stops live transcription for a call
+    /// </summary>
+    /// <param name="sessionId">Transcription session ID</param>
+    /// <returns>Final transcription result</returns>
+    public async Task<TranscriptionResult?> StopTranscriptionAsync(string sessionId)
+    {
+        try
+        {
+            _logger.LogInformation("Stopping transcription for session {SessionId}", sessionId);
+
+            var result = await _transcriptionService.StopLiveTranscriptionAsync(sessionId);
+            
+            if (result.Success)
+            {
+                _logger.LogInformation("Transcription stopped successfully for session {SessionId}. " +
+                    "Text length: {TextLength} characters", sessionId, result.Text.Length);
+            }
+            else
+            {
+                _logger.LogWarning("Transcription stop failed for session {SessionId}: {Error}", 
+                    sessionId, result.ErrorMessage);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to stop transcription for session {SessionId}", sessionId);
+            return null;
         }
     }
 }

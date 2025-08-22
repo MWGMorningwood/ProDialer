@@ -1,13 +1,17 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Azure.AI.OpenAI;
+using Azure;
+using Azure.Identity;
 using OpenAI;
 using OpenAI.Audio;
+using System.ClientModel;
 using System.Text.Json;
 
 namespace ProDialer.Functions.Services;
 
 /// <summary>
-/// Service for real-time call transcription using OpenAI Whisper
+/// Service for real-time call transcription using Azure OpenAI Whisper
 /// Provides extremely fast live transcription for agent calls
 /// </summary>
 public class TranscriptionService
@@ -23,14 +27,39 @@ public class TranscriptionService
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
-        if (string.IsNullOrEmpty(_options.OpenAIApiKey))
+        if (string.IsNullOrEmpty(_options.AzureOpenAIEndpoint))
         {
-            _logger.LogWarning("OpenAI API key not configured. Transcription service will be disabled.");
+            _logger.LogWarning("Azure OpenAI endpoint not configured. Transcription service will be disabled.");
             _openAiClient = null!;
         }
         else
         {
-            _openAiClient = new OpenAIClient(_options.OpenAIApiKey);
+            try
+            {
+                if (!string.IsNullOrEmpty(_options.AzureOpenAIApiKey))
+                {
+                    // Use Azure OpenAI with API key authentication
+                    var clientOptions = new OpenAIClientOptions
+                    {
+                        Endpoint = new Uri(_options.AzureOpenAIEndpoint)
+                    };
+                    
+                    _openAiClient = new OpenAIClient(new ApiKeyCredential(_options.AzureOpenAIApiKey), clientOptions);
+                }
+                else
+                {
+                    // For managed identity, we'll need to handle this differently
+                    // For now, require API key
+                    throw new InvalidOperationException("Managed identity authentication not yet implemented. Please provide AzureOpenAIApiKey.");
+                }
+                
+                _logger.LogInformation("Azure OpenAI client initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to initialize Azure OpenAI client");
+                _openAiClient = null!;
+            }
         }
     }
 
@@ -44,7 +73,7 @@ public class TranscriptionService
     {
         if (_openAiClient == null)
         {
-            _logger.LogWarning("Transcription service not available - OpenAI API key not configured");
+            _logger.LogWarning("Transcription service not available - Azure OpenAI not configured");
             return null;
         }
 
@@ -71,7 +100,7 @@ public class TranscriptionService
     }
 
     /// <summary>
-    /// Transcribes an audio segment using OpenAI Whisper
+    /// Transcribes an audio segment using Azure OpenAI Whisper
     /// </summary>
     /// <param name="audioData">Audio data in supported format (WAV, MP3, etc.)</param>
     /// <param name="language">Optional language hint</param>
@@ -83,7 +112,7 @@ public class TranscriptionService
             return new TranscriptionResult
             {
                 Success = false,
-                ErrorMessage = "Transcription service not available - OpenAI API key not configured"
+                ErrorMessage = "Transcription service not available - Azure OpenAI not configured"
             };
         }
 
@@ -94,19 +123,18 @@ public class TranscriptionService
             // Create a temporary stream from audio data
             using var audioStream = new MemoryStream(audioData);
             
+            // Get the audio client for transcription using the deployment name
             var audioClient = _openAiClient.GetAudioClient(_options.WhisperModel);
             
+            // Create transcription options
             var transcriptionOptions = new AudioTranscriptionOptions()
             {
                 ResponseFormat = AudioTranscriptionFormat.Verbose,
-                Temperature = 0.1f // Lower temperature for more consistent results
+                Temperature = 0.1f, // Lower temperature for more consistent results
+                Language = language // Set language in initializer
             };
 
-            if (!string.IsNullOrEmpty(language))
-            {
-                transcriptionOptions.Language = language;
-            }
-
+            // Transcribe the audio
             var response = await audioClient.TranscribeAudioAsync(audioStream, "audio.wav", transcriptionOptions);
             
             if (response?.Value != null)
@@ -122,7 +150,7 @@ public class TranscriptionService
                     Text = transcription.Text ?? string.Empty,
                     Language = transcription.Language,
                     Duration = transcription.Duration?.TotalSeconds ?? 0,
-                    Confidence = 0.85 // Default confidence since OpenAI doesn't provide it directly
+                    Confidence = 0.85 // Default confidence since Azure OpenAI doesn't provide it directly
                 };
             }
             else
@@ -130,7 +158,7 @@ public class TranscriptionService
                 return new TranscriptionResult
                 {
                     Success = false,
-                    ErrorMessage = "No transcription result returned from API"
+                    ErrorMessage = "No transcription result returned from Azure OpenAI API"
                 };
             }
         }
@@ -244,9 +272,14 @@ public class TranscriptionServiceOptions
     public const string SectionName = "TranscriptionService";
 
     /// <summary>
-    /// OpenAI API key for Whisper transcription
+    /// Azure OpenAI endpoint URL (e.g., https://your-resource.openai.azure.com/)
     /// </summary>
-    public string? OpenAIApiKey { get; set; }
+    public string? AzureOpenAIEndpoint { get; set; }
+
+    /// <summary>
+    /// Azure OpenAI API key for authentication (optional if using managed identity)
+    /// </summary>
+    public string? AzureOpenAIApiKey { get; set; }
 
     /// <summary>
     /// Whisper model to use (whisper-1 is the fastest)

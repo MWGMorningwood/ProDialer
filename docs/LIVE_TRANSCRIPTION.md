@@ -2,13 +2,13 @@
 
 ## Overview
 
-The ProDialer system now includes live transcription capabilities using OpenAI Whisper for extremely fast real-time transcriptions during agent calls. This feature provides automatic speech-to-text conversion that can help with call monitoring, compliance, and agent assistance.
+The ProDialer system now includes live transcription capabilities using Azure OpenAI Whisper for extremely fast real-time transcriptions during agent calls. This feature provides automatic speech-to-text conversion that can help with call monitoring, compliance, and agent assistance.
 
 ## Features
 
 - **Real-time Transcription**: Live transcription during active calls
 - **Multiple Languages**: Automatic language detection or manual language specification
-- **High Performance**: Uses OpenAI Whisper "whisper-1" model for fast processing
+- **High Performance**: Uses Azure OpenAI Whisper "whisper-1" model for fast processing
 - **Call Integration**: Seamlessly integrates with existing Azure Communication Services
 - **Flexible Storage**: Transcriptions stored in CallLog with confidence scores
 
@@ -93,7 +93,8 @@ Add the following configuration to your `local.settings.json` or Azure App Setti
 
 ```json
 {
-    "TranscriptionService:OpenAIApiKey": "your-openai-api-key",
+    "TranscriptionService:AzureOpenAIEndpoint": "https://your-openai-resource.openai.azure.com/",
+    "TranscriptionService:AzureOpenAIApiKey": "your-azure-openai-api-key",
     "TranscriptionService:WhisperModel": "whisper-1",
     "TranscriptionService:EnableByDefault": "true",
     "TranscriptionService:MaxAudioChunkSize": "1048576",
@@ -104,11 +105,12 @@ Add the following configuration to your `local.settings.json` or Azure App Setti
 
 ### Required Configuration
 
-- **OpenAIApiKey**: Your OpenAI API key for Whisper access
+- **AzureOpenAIEndpoint**: Your Azure OpenAI service endpoint URL
 - **WhisperModel**: Model to use (default: "whisper-1" for fastest processing)
 
 ### Optional Configuration
 
+- **AzureOpenAIApiKey**: API key for authentication (optional if using managed identity)
 - **EnableByDefault**: Enable transcription for all calls by default
 - **MaxAudioChunkSize**: Maximum size of audio chunks in bytes
 - **MinChunkDuration**: Minimum duration before processing chunks
@@ -164,17 +166,17 @@ if (result?.Success == true)
 
 The transcription service includes comprehensive error handling:
 
-- **API Key Missing**: Service degrades gracefully with warning logs
+- **API Configuration Missing**: Service degrades gracefully with warning logs
 - **Network Issues**: Retry logic for transient failures
 - **Audio Format Issues**: Clear error messages for unsupported formats
-- **Rate Limiting**: Handles OpenAI rate limits appropriately
+- **Rate Limiting**: Handles Azure OpenAI rate limits appropriately
 
 ## Performance Considerations
 
 - **Latency**: Whisper-1 model provides sub-second transcription for short audio segments
 - **Bandwidth**: Audio chunks are processed in small segments to minimize memory usage
 - **Storage**: Large transcriptions are truncated to prevent database bloat
-- **Costs**: Monitor OpenAI usage for cost management
+- **Costs**: Monitor Azure OpenAI usage for cost management
 
 ## Future Enhancements
 
@@ -189,8 +191,9 @@ The transcription service includes comprehensive error handling:
 ### Common Issues
 
 1. **"Transcription service not available"**
-   - Check OpenAI API key configuration
-   - Verify network connectivity to OpenAI API
+   - Check Azure OpenAI endpoint and API key configuration
+   - Verify network connectivity to Azure OpenAI service
+   - Ensure proper managed identity permissions if not using API key
 
 2. **"Audio format not supported"**
    - Ensure audio is in WAV, MP3, or other supported format

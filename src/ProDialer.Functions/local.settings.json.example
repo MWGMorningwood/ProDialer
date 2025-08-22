@@ -11,7 +11,8 @@
         "CommunicationService:CallerPhoneNumber": "+1234567890",
         "CommunicationService:CallbackBaseUrl": "https://your-app.azurewebsites.net",
         
-        "TranscriptionService:OpenAIApiKey": "your-openai-api-key-here",
+        "TranscriptionService:AzureOpenAIEndpoint": "https://your-openai-resource.openai.azure.com/",
+        "TranscriptionService:AzureOpenAIApiKey": "your-azure-openai-api-key-here",
         "TranscriptionService:WhisperModel": "whisper-1",
         "TranscriptionService:EnableByDefault": "true",
         "TranscriptionService:MaxAudioChunkSize": "1048576",
